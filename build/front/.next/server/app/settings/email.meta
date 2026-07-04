@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(workspace)/layout,_N_T_/(workspace)/settings/layout,_N_T_/(workspace)/settings/email/layout,_N_T_/(workspace)/settings/email/page,_N_T_/settings/email"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KHdvcmtzcGFjZSk/settings/email/__PAGE__",
+    "/!KHdvcmtzcGFjZSk/settings/email",
+    "/!KHdvcmtzcGFjZSk/settings",
+    "/!KHdvcmtzcGFjZSk",
+    "/_index",
+    "/_head"
+  ]
+}

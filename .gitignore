@@ -1,0 +1,5 @@
+*.log
+*.out.log
+*.err.log
+standalone.pids.json
+.env

@@ -1,0 +1,447 @@
+{
+  "version": 3,
+  "pages404": true,
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/quotations/[id]/download",
+      "regex": "^/api/quotations/([^/]+?)/download(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/quotations/(?<nxtPid>[^/]+?)/download(?:/)?$"
+    },
+    {
+      "page": "/clientes/[id]",
+      "regex": "^/clientes/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/clientes/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/compras/[id]",
+      "regex": "^/compras/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/compras/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/compras/[id]/edit",
+      "regex": "^/compras/([^/]+?)/edit(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/compras/(?<nxtPid>[^/]+?)/edit(?:/)?$"
+    },
+    {
+      "page": "/cotizaciones/[id]",
+      "regex": "^/cotizaciones/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/cotizaciones/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/cotizaciones/[id]/print",
+      "regex": "^/cotizaciones/([^/]+?)/print(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/cotizaciones/(?<nxtPid>[^/]+?)/print(?:/)?$"
+    },
+    {
+      "page": "/customers/[id]",
+      "regex": "^/customers/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/customers/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/notifications/[id]",
+      "regex": "^/notifications/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/notifications/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/ordenes-servicio/[id]",
+      "regex": "^/ordenes\\-servicio/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/ordenes\\-servicio/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/ordenes-servicio/[id]/edit",
+      "regex": "^/ordenes\\-servicio/([^/]+?)/edit(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/ordenes\\-servicio/(?<nxtPid>[^/]+?)/edit(?:/)?$"
+    },
+    {
+      "page": "/projects/[id]",
+      "regex": "^/projects/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/projects/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/proyectos/[id]",
+      "regex": "^/proyectos/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/proyectos/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/quotation-requests/[id]",
+      "regex": "^/quotation\\-requests/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/quotation\\-requests/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/quotations/[id]",
+      "regex": "^/quotations/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/quotations/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/quotations/[id]/print",
+      "regex": "^/quotations/([^/]+?)/print(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/quotations/(?<nxtPid>[^/]+?)/print(?:/)?$"
+    },
+    {
+      "page": "/service-orders/[id]",
+      "regex": "^/service\\-orders/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/service\\-orders/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/service-orders/[id]/edit",
+      "regex": "^/service\\-orders/([^/]+?)/edit(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/service\\-orders/(?<nxtPid>[^/]+?)/edit(?:/)?$"
+    },
+    {
+      "page": "/solicitudes-cotizacion/[id]",
+      "regex": "^/solicitudes\\-cotizacion/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/solicitudes\\-cotizacion/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/tareas/[id]",
+      "regex": "^/tareas/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/tareas/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/tareas/[id]/technical-report",
+      "regex": "^/tareas/([^/]+?)/technical\\-report(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/tareas/(?<nxtPid>[^/]+?)/technical\\-report(?:/)?$"
+    },
+    {
+      "page": "/tasks/[id]",
+      "regex": "^/tasks/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/tasks/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/tasks/[id]/technical-report",
+      "regex": "^/tasks/([^/]+?)/technical\\-report(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/tasks/(?<nxtPid>[^/]+?)/technical\\-report(?:/)?$"
+    },
+    {
+      "page": "/ventas/[id]",
+      "regex": "^/ventas/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/ventas/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/ventas/[id]/edit",
+      "regex": "^/ventas/([^/]+?)/edit(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/ventas/(?<nxtPid>[^/]+?)/edit(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/app",
+      "regex": "^/app(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app(?:/)?$"
+    },
+    {
+      "page": "/app/settings",
+      "regex": "^/app/settings(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/app/settings(?:/)?$"
+    },
+    {
+      "page": "/clientes",
+      "regex": "^/clientes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/clientes(?:/)?$"
+    },
+    {
+      "page": "/compras",
+      "regex": "^/compras(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/compras(?:/)?$"
+    },
+    {
+      "page": "/compras/new",
+      "regex": "^/compras/new(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/compras/new(?:/)?$"
+    },
+    {
+      "page": "/cotizaciones",
+      "regex": "^/cotizaciones(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/cotizaciones(?:/)?$"
+    },
+    {
+      "page": "/cotizaciones/new",
+      "regex": "^/cotizaciones/new(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/cotizaciones/new(?:/)?$"
+    },
+    {
+      "page": "/customers",
+      "regex": "^/customers(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/customers(?:/)?$"
+    },
+    {
+      "page": "/dashboard",
+      "regex": "^/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/flujo-proceso",
+      "regex": "^/flujo\\-proceso(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/flujo\\-proceso(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/notifications",
+      "regex": "^/notifications(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/notifications(?:/)?$"
+    },
+    {
+      "page": "/ordenes-servicio",
+      "regex": "^/ordenes\\-servicio(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/ordenes\\-servicio(?:/)?$"
+    },
+    {
+      "page": "/ordenes-servicio/new",
+      "regex": "^/ordenes\\-servicio/new(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/ordenes\\-servicio/new(?:/)?$"
+    },
+    {
+      "page": "/process-flow",
+      "regex": "^/process\\-flow(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/process\\-flow(?:/)?$"
+    },
+    {
+      "page": "/projects",
+      "regex": "^/projects(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/projects(?:/)?$"
+    },
+    {
+      "page": "/proyectos",
+      "regex": "^/proyectos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/proyectos(?:/)?$"
+    },
+    {
+      "page": "/quotation-requests",
+      "regex": "^/quotation\\-requests(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/quotation\\-requests(?:/)?$"
+    },
+    {
+      "page": "/quotations",
+      "regex": "^/quotations(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/quotations(?:/)?$"
+    },
+    {
+      "page": "/quotations/new",
+      "regex": "^/quotations/new(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/quotations/new(?:/)?$"
+    },
+    {
+      "page": "/service-orders",
+      "regex": "^/service\\-orders(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/service\\-orders(?:/)?$"
+    },
+    {
+      "page": "/service-orders/new",
+      "regex": "^/service\\-orders/new(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/service\\-orders/new(?:/)?$"
+    },
+    {
+      "page": "/settings/account",
+      "regex": "^/settings/account(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/settings/account(?:/)?$"
+    },
+    {
+      "page": "/settings/email",
+      "regex": "^/settings/email(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/settings/email(?:/)?$"
+    },
+    {
+      "page": "/settings/users",
+      "regex": "^/settings/users(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/settings/users(?:/)?$"
+    },
+    {
+      "page": "/solicitar-cotizacion",
+      "regex": "^/solicitar\\-cotizacion(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/solicitar\\-cotizacion(?:/)?$"
+    },
+    {
+      "page": "/solicitudes-cotizacion",
+      "regex": "^/solicitudes\\-cotizacion(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/solicitudes\\-cotizacion(?:/)?$"
+    },
+    {
+      "page": "/tareas",
+      "regex": "^/tareas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/tareas(?:/)?$"
+    },
+    {
+      "page": "/tasks",
+      "regex": "^/tasks(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/tasks(?:/)?$"
+    },
+    {
+      "page": "/ventas",
+      "regex": "^/ventas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/ventas(?:/)?$"
+    },
+    {
+      "page": "/ventas/new",
+      "regex": "^/ventas/new(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/ventas/new(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSuffix": ".prefetch.rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

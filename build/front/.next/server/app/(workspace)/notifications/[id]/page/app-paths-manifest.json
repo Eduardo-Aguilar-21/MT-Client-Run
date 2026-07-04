@@ -1,0 +1,3 @@
+{
+  "/(workspace)/notifications/[id]/page": "app/(workspace)/notifications/[id]/page.js"
+}

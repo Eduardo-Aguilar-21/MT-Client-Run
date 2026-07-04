@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(workspace)/layout,_N_T_/(workspace)/ventas/layout,_N_T_/(workspace)/ventas/new/layout,_N_T_/(workspace)/ventas/new/page,_N_T_/ventas/new"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KHdvcmtzcGFjZSk/ventas/new/__PAGE__",
+    "/!KHdvcmtzcGFjZSk/ventas/new",
+    "/!KHdvcmtzcGFjZSk/ventas",
+    "/!KHdvcmtzcGFjZSk",
+    "/_index",
+    "/_head"
+  ]
+}

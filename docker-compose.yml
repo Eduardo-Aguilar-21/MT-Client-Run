@@ -1,0 +1,52 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: ${COMPOSE_PROJECT_NAME:-mt-cotiza}-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ../MT-Cotiza-Client-API
+      dockerfile: Dockerfile
+    container_name: ${COMPOSE_PROJECT_NAME:-mt-cotiza}-api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      SPRING_PROFILES_ACTIVE: ${API_PROFILE:-prod}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SERVER_PORT: ${API_PORT:-8080}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      UPLOAD_DIR: /app/uploads
+      LOG_FILE_NAME: /app/logs/cotiflow.log
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    volumes:
+      - ./data/uploads:/app/uploads
+      - ./data/logs:/app/logs
+    ports:
+      - "${API_PORT:-8080}:8080"
+
+  front:
+    build:
+      context: ../MT-Cotiza-Client-Front
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    container_name: ${COMPOSE_PROJECT_NAME:-mt-cotiza}-front
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"

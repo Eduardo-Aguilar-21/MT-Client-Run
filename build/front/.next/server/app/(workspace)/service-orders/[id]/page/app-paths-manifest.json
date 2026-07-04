@@ -1,0 +1,3 @@
+{
+  "/(workspace)/service-orders/[id]/page": "app/(workspace)/service-orders/[id]/page.js"
+}

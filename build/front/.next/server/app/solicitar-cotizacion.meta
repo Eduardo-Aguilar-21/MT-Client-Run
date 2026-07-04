@@ -1,0 +1,15 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/solicitar-cotizacion/layout,_N_T_/solicitar-cotizacion/page,_N_T_/solicitar-cotizacion"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/solicitar-cotizacion/__PAGE__",
+    "/solicitar-cotizacion",
+    "/_index",
+    "/_head"
+  ]
+}
