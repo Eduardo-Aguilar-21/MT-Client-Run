@@ -96,7 +96,7 @@ Incluye `node_modules` si aparece dentro de `dist/run-front`; ese es el standalo
 
 ## Configuracion
 
-Copia `.env.example` como `.env` y ajusta los valores reales.
+Si `.env` no existe, el launcher lo crea desde `.env.example`. Para produccion, revisa y ajusta `.env` antes de entregar la carpeta.
 
 Variables importantes:
 
@@ -113,15 +113,27 @@ JWT_SECRET_KEY=...
 
 ## Base de datos
 
-El launcher arranca API y Front. La base de datos debe estar disponible segun `SPRING_DATASOURCE_URL`.
-
-Para cliente final hay que definir uno de estos caminos:
+Por defecto Run administra PostgreSQL local con Docker:
 
 ```text
-1. PostgreSQL local/instalado.
-2. PostgreSQL levantado por Docker.
-3. PostgreSQL portable empaquetado aparte.
+RUN_DB_MODE=docker
 ```
+
+Los archivos de la base quedan dentro de:
+
+```text
+MT-Client-Run/data/db/
+```
+
+El launcher levanta solo el servicio `postgres` del `docker-compose.yml`, espera a que responda `pg_isready`, y luego arranca API y Front desde los artefactos de `build/`.
+
+Si excepcionalmente quieres usar una DB externa, cambia:
+
+```text
+RUN_DB_MODE=external
+```
+
+y ajusta `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` y `SPRING_DATASOURCE_PASSWORD`.
 
 El launcher no compila codigo fuente.
 
@@ -136,7 +148,7 @@ data/logs/front.out.log
 data/logs/front.err.log
 ```
 
-Ademas la API puede escribir su log interno en el valor de `LOG_FILE_NAME`.
+Ademas la API escribe su log interno en `data/logs/cotiflow.log`. El launcher fuerza `UPLOAD_DIR` y `LOG_FILE_NAME` a rutas absolutas dentro de `MT-Client-Run/data`.
 
 ## Detener
 

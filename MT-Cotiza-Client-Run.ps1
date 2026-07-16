@@ -4,6 +4,7 @@ $ErrorActionPreference = "Stop"
 $runRoot = $PSScriptRoot
 $repoRoot = Split-Path -Path $runRoot -Parent
 $envFile = Join-Path $runRoot ".env"
+$envExampleFile = Join-Path $runRoot ".env.example"
 $composeFile = Join-Path $runRoot "docker-compose.yml"
 
 $apiDir = Join-Path $repoRoot "MT-Cotiza-Client-API"
@@ -40,6 +41,15 @@ function New-TreeClean([string]$Path) {
     Remove-Item -LiteralPath $Path -Recurse -Force
   }
   New-Item -ItemType Directory -Path $Path | Out-Null
+}
+
+function Ensure-EnvFile {
+  if (Test-Path -Path $envFile) { return }
+  if (-not (Test-Path -Path $envExampleFile)) {
+    throw "No existe .env ni .env.example en $runRoot. Crea .env antes de iniciar."
+  }
+  Copy-Item -Path $envExampleFile -Destination $envFile -Force
+  Write-Host "Se creo .env desde .env.example. Revisa credenciales y secrets antes de produccion."
 }
 
 function Get-EnvValue([string]$Key, [string]$Default = "") {
@@ -274,11 +284,15 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   Write-Host "[4/6] Modo sin Docker: iniciando procesos locales..."
 
   Import-EnvFile
+  $uploadDir = Join-Path $dataRoot "uploads"
+  $apiAppLog = Join-Path $dataRoot "logs\cotiflow.log"
   $envSet = @{
     "SPRING_PROFILES_ACTIVE" = $ApiProfile
     "SERVER_PORT" = $ApiPort
     "NEXT_PUBLIC_API_URL" = $ApiUrl
     "PORT" = $FrontPort
+    "UPLOAD_DIR" = $uploadDir
+    "LOG_FILE_NAME" = $apiAppLog
   }
   foreach ($k in $envSet.Keys) {
     [Environment]::SetEnvironmentVariable($k, $envSet[$k], "Process")
@@ -321,6 +335,35 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   Write-Host "Nota: la base de datos debe estar disponible por URL definida en .env."
 }
 
+function Start-RunPostgres {
+  Write-Host "[4/6] Base de datos local Run: levantando PostgreSQL..."
+  if (-not (Ensure-DockerRunning)) {
+    throw "Run requiere Docker para administrar PostgreSQL local en data\db. Instala Docker Desktop o configura un runtime PostgreSQL portable."
+  }
+
+  Push-Location $runRoot
+  try {
+    Invoke-Docker @("compose", "--env-file", ".env", "-f", $composeFile, "up", "-d", "postgres")
+
+    $dbUser = Get-EnvValue "POSTGRES_USER" "cotiflow_user"
+    $dbName = Get-EnvValue "POSTGRES_DB" "cotiflow"
+    $ready = $false
+    for ($i = 0; $i -lt 60; $i++) {
+      & $script:DockerExe @("compose", "--env-file", ".env", "-f", $composeFile, "exec", "-T", "postgres", "pg_isready", "-U", $dbUser, "-d", $dbName) >$null 2>$null
+      if ($LASTEXITCODE -eq 0) {
+        $ready = $true
+        break
+      }
+      Start-Sleep -Seconds 2
+    }
+    if (-not $ready) {
+      throw "PostgreSQL local no quedo listo a tiempo. Revisa Docker y data\db."
+    }
+  } finally {
+    Pop-Location
+  }
+}
+
 function Start-Docker([string]$frontPort) {
   Write-Host "[5/6] Levantando servicios con Docker..."
   Push-Location $runRoot
@@ -354,7 +397,8 @@ function Start-Docker([string]$frontPort) {
   Write-Host "Logs: docker compose --env-file .env -f $composeFile logs -f"
 }
 
-Write-Host "[1/6] Limpiando estructura de ejecucion..."
+Write-Host "[1/6] Preparando estructura de ejecucion..."
+Ensure-EnvFile
 $fastStart = To-Bool (Get-EnvValue "MT_FAST_START" "1") $true
 $forceRebuild = To-Bool (Get-EnvValue "MT_FORCE_REBUILD" "0") $false
 $cleanData = To-Bool (Get-EnvValue "MT_CLEAN_DATA" "0") $false
@@ -382,6 +426,7 @@ $frontPort = Get-EnvValue "FRONTEND_PORT" "3000"
 $apiProfile = Get-EnvValue "API_PROFILE" "prod"
 $apiPort = Get-EnvValue "API_PORT" "8080"
 $artifactOnly = To-Bool (Get-EnvValue "MT_ARTIFACT_ONLY" "1") $true
+$runDbMode = (Get-EnvValue "RUN_DB_MODE" "docker").Trim().ToLowerInvariant()
 
 Write-Host "[3/6] Verificando modo de ejecucion..."
 
@@ -392,6 +437,11 @@ if ($artifactOnly) {
   }
   if (-not (Test-Path -Path (Join-Path $frontBuild "server.js"))) {
     throw "Falta build/front/server.js. Copia aqui el output standalone del frontend."
+  }
+  if ($runDbMode -eq "docker") {
+    Start-RunPostgres
+  } elseif ($runDbMode -ne "external") {
+    throw "RUN_DB_MODE invalido: $runDbMode. Usa docker o external."
   }
   Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort
   exit 0
