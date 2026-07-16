@@ -172,22 +172,8 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
       Write-Host "   - Ejecutando: runas /trustlevel:0x20000 $runasCommand"
       Start-Process -FilePath "runas.exe" -ArgumentList @("/trustlevel:0x20000", "`"$runasCommand`"") -WorkingDirectory $runRoot -WindowStyle Hidden | Out-Null
       $postgresProc = $null
-      Start-Sleep -Seconds 3
-      $runasReady = Invoke-PortablePostgres -ExeName "pg_isready.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port) -IgnoreFailure $true -Quiet $true
-      if ($runasReady -ne 0) {
-        Write-Host "   - runas no dejo PostgreSQL listo. Reintentando con tarea programada limitada..."
-        $taskName = "MT-Cotiza-Client-Postgres"
-        $taskTime = (Get-Date).AddMinutes(1).ToString("HH:mm")
-        & schtasks.exe /Delete /TN $taskName /F >$null 2>$null
-        & schtasks.exe /Create /TN $taskName /SC ONCE /ST $taskTime /TR "`"$cmdFile`"" /RL LIMITED /F >$null 2>$null
-        if ($LASTEXITCODE -eq 0) {
-          & schtasks.exe /Run /TN $taskName >$null 2>$null
-          Start-Sleep -Seconds 3
-          & schtasks.exe /Delete /TN $taskName /F >$null 2>$null
-        } else {
-          Write-Host "   - No se pudo crear tarea programada limitada. Continuando con verificacion..."
-        }
-      }
+      Write-Host "   - Esperando PostgreSQL iniciado con token restringido..."
+      Start-Sleep -Seconds 2
     } else {
       throw "PostgreSQL portable se detuvo antes de quedar listo (codigo $($postgresProc.ExitCode)). Revisa data\logs\postgres.err.log."
     }
