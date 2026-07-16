@@ -150,10 +150,11 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
     Invoke-PortablePostgres -ExeName "initdb.exe" -PgArgs @("-D", $pgData, "-U", $DbUser, "-A", "trust", "-E", "UTF8") | Out-Null
   }
 
-  $startCode = Invoke-PortablePostgres -ExeName "pg_ctl.exe" -PgArgs @("-D", $pgData, "-l", $pgLog, "-o", "-p $Port -h 127.0.0.1", "start") -IgnoreFailure $true
-  if ($startCode -ne 0) {
-    Write-Host "   - PostgreSQL podria estar ya iniciado. Continuando con verificacion..."
-  }
+  $postgresExe = Resolve-PortablePostgresExecutable "postgres.exe"
+  $postgresArgs = @("-D", $pgData, "-p", $Port, "-h", "127.0.0.1")
+  Write-Host "   - Ejecutando: postgres.exe $($postgresArgs -join ' ')"
+  $postgresProc = Start-Process -FilePath $postgresExe -ArgumentList $postgresArgs -WorkingDirectory $portablePostgresBin -RedirectStandardOutput $pgLog -RedirectStandardError $pgLog -PassThru -WindowStyle Hidden
+  Write-Host "   - PostgreSQL iniciado (PID $($postgresProc.Id))"
 
   $ready = $false
   for ($i = 0; $i -lt 60; $i++) {
@@ -170,6 +171,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
 
   Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, $DbName) -IgnoreFailure $true | Out-Null
   Write-Host "   - PostgreSQL portable listo en 127.0.0.1:$Port, datos en data\db."
+  return $postgresProc.Id
 }
 
 function Invoke-Docker([string[]]$Args) {
@@ -343,7 +345,7 @@ function Get-StandaloneServer {
   }
 }
 
-function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfile, [string]$ApiPort) {
+function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfile, [string]$ApiPort, [int]$PostgresPid = 0) {
   $javaExe = Resolve-Executable "java" $javaCandidatePaths
   $nodeExe = Resolve-Executable "node" $nodeCandidatePaths
   if (-not $javaExe) {
@@ -381,12 +383,14 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   $frontProc = Start-Process -FilePath $nodeExe -ArgumentList "server.js" -WorkingDirectory $frontBuild -RedirectStandardOutput $frontOutLog -RedirectStandardError $frontErrLog -PassThru -WindowStyle Minimized
   Write-Host "   - Front iniciado (PID $($frontProc.Id))"
 
-  @{
+  $pidState = @{
     mode = "standalone"
     api = $apiProc.Id
     front = $frontProc.Id
     started = (Get-Date).ToString("o")
-  } | ConvertTo-Json | Set-Content -Path $pidFile -Encoding UTF8
+  }
+  if ($PostgresPid -gt 0) { $pidState.postgres = $PostgresPid }
+  $pidState | ConvertTo-Json | Set-Content -Path $pidFile -Encoding UTF8
 
   $frontUrl = "http://localhost:$FrontPort"
   $ready = $false
@@ -514,14 +518,15 @@ if ($artifactOnly) {
   if (-not (Test-Path -Path (Join-Path $frontBuild "server.js"))) {
     throw "Falta build/front/server.js. Copia aqui el output standalone del frontend."
   }
+  $postgresPid = $null
   if ($runDbMode -eq "portable") {
-    Start-PortablePostgres -Port $dbPort -DbName $dbName -DbUser $dbUser
+    $postgresPid = Start-PortablePostgres -Port $dbPort -DbName $dbName -DbUser $dbUser
   } elseif ($runDbMode -eq "docker") {
     Start-RunPostgres
   } elseif ($runDbMode -ne "external") {
     throw "RUN_DB_MODE invalido: $runDbMode. Usa portable, docker o external."
   }
-  Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort
+  Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort -PostgresPid $postgresPid
   exit 0
 }
 
