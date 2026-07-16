@@ -125,7 +125,7 @@ Los archivos de la base quedan dentro de:
 MT-Client-Run/data/db/
 ```
 
-El launcher usa `runtime/postgres/bin`, inicializa `data/db` si hace falta, espera a que responda `pg_isready`, y luego arranca API y Front desde los artefactos de `build/`.
+El launcher usa el PostgreSQL portable incluido en `runtime/postgres/bin`, inicializa `data/db` si hace falta, espera a que responda `pg_isready`, y luego arranca API y Front desde los artefactos de `build/`.
 
 Si excepcionalmente quieres usar Docker o una DB externa, cambia:
 
