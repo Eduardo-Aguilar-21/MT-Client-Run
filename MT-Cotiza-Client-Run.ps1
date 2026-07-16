@@ -122,11 +122,11 @@ function Resolve-PortablePostgresExecutable([string]$Name) {
   throw "No se encontro PostgreSQL portable: $exe. Coloca PostgreSQL para Windows en runtime\postgres\bin."
 }
 
-function Invoke-PortablePostgres([string]$ExeName, [string[]]$Args, [bool]$IgnoreFailure = $false) {
+function Invoke-PortablePostgres([string]$ExeName, [string[]]$PgArgs = @(), [bool]$IgnoreFailure = $false) {
   $exe = Resolve-PortablePostgresExecutable $ExeName
-  $argsText = $Args -join " "
+  $argsText = $PgArgs -join " "
   Write-Host "   - Ejecutando: $ExeName $argsText"
-  & $exe @Args
+  & $exe @PgArgs
   if ($LASTEXITCODE -ne 0 -and -not $IgnoreFailure) {
     throw "Fallo comando $ExeName $argsText (codigo $LASTEXITCODE)"
   }
@@ -147,17 +147,17 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
 
   if (-not (Test-Path -Path (Join-Path $pgData "PG_VERSION"))) {
     Write-Host "   - Inicializando data/db..."
-    Invoke-PortablePostgres "initdb.exe" @("-D", $pgData, "-U", $DbUser, "-A", "trust", "-E", "UTF8") | Out-Null
+    Invoke-PortablePostgres -ExeName "initdb.exe" -PgArgs @("-D", $pgData, "-U", $DbUser, "-A", "trust", "-E", "UTF8") | Out-Null
   }
 
-  $startCode = Invoke-PortablePostgres "pg_ctl.exe" @("-D", $pgData, "-l", $pgLog, "-o", "-p $Port -h 127.0.0.1", "start") $true
+  $startCode = Invoke-PortablePostgres -ExeName "pg_ctl.exe" -PgArgs @("-D", $pgData, "-l", $pgLog, "-o", "-p $Port -h 127.0.0.1", "start") -IgnoreFailure $true
   if ($startCode -ne 0) {
     Write-Host "   - PostgreSQL podria estar ya iniciado. Continuando con verificacion..."
   }
 
   $ready = $false
   for ($i = 0; $i -lt 60; $i++) {
-    $readyCode = Invoke-PortablePostgres "pg_isready.exe" @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, "-d", "postgres") $true
+    $readyCode = Invoke-PortablePostgres -ExeName "pg_isready.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, "-d", "postgres") -IgnoreFailure $true
     if ($readyCode -eq 0) {
       $ready = $true
       break
@@ -168,7 +168,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
     throw "PostgreSQL portable no quedo listo a tiempo. Revisa data\logs\postgres.log."
   }
 
-  Invoke-PortablePostgres "createdb.exe" @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, $DbName) $true | Out-Null
+  Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, $DbName) -IgnoreFailure $true | Out-Null
   Write-Host "   - PostgreSQL portable listo en 127.0.0.1:$Port, datos en data\db."
 }
 
