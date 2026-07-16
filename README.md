@@ -113,10 +113,10 @@ JWT_SECRET_KEY=...
 
 ## Base de datos
 
-Por defecto Run administra PostgreSQL local con Docker:
+Por defecto Run administra PostgreSQL portable dentro de la carpeta Run:
 
 ```text
-RUN_DB_MODE=docker
+RUN_DB_MODE=portable
 ```
 
 Los archivos de la base quedan dentro de:
@@ -125,15 +125,17 @@ Los archivos de la base quedan dentro de:
 MT-Client-Run/data/db/
 ```
 
-El launcher levanta solo el servicio `postgres` del `docker-compose.yml`, espera a que responda `pg_isready`, y luego arranca API y Front desde los artefactos de `build/`.
+El launcher usa `runtime/postgres/bin`, inicializa `data/db` si hace falta, espera a que responda `pg_isready`, y luego arranca API y Front desde los artefactos de `build/`.
 
-Si excepcionalmente quieres usar una DB externa, cambia:
+Si excepcionalmente quieres usar Docker o una DB externa, cambia:
 
 ```text
+RUN_DB_MODE=docker
+# o
 RUN_DB_MODE=external
 ```
 
-y ajusta `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` y `SPRING_DATASOURCE_PASSWORD`.
+Para `external`, ajusta `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` y `SPRING_DATASOURCE_PASSWORD`.
 
 El launcher no compila codigo fuente.
 

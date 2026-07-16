@@ -14,6 +14,7 @@ $dataRoot = Join-Path $runRoot "data"
 $apiBuild = Join-Path $buildRoot "api"
 $frontBuild = Join-Path $buildRoot "front"
 $pidFile = Join-Path $runRoot "standalone.pids.json"
+$portablePostgresBin = Join-Path $runRoot "runtime\postgres\bin"
 
 $javaCandidatePaths = @(
   (Join-Path $runRoot "runtime\java\bin\java.exe"),
@@ -113,6 +114,62 @@ function Resolve-Executable([string]$commandName, [string[]]$candidates) {
     if ($path -and (Test-Path -Path $path)) { return $path }
   }
   return $null
+}
+
+function Resolve-PortablePostgresExecutable([string]$Name) {
+  $exe = Join-Path $portablePostgresBin $Name
+  if (Test-Path -Path $exe) { return $exe }
+  throw "No se encontro PostgreSQL portable: $exe. Coloca PostgreSQL para Windows en runtime\postgres\bin."
+}
+
+function Invoke-PortablePostgres([string]$ExeName, [string[]]$Args, [bool]$IgnoreFailure = $false) {
+  $exe = Resolve-PortablePostgresExecutable $ExeName
+  $argsText = $Args -join " "
+  Write-Host "   - Ejecutando: $ExeName $argsText"
+  & $exe @Args
+  if ($LASTEXITCODE -ne 0 -and -not $IgnoreFailure) {
+    throw "Fallo comando $ExeName $argsText (codigo $LASTEXITCODE)"
+  }
+  return $LASTEXITCODE
+}
+
+function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser) {
+  Write-Host "[4/6] Base de datos local Run: iniciando PostgreSQL portable..."
+  $pgData = Join-Path $dataRoot "db"
+  $pgLog = Join-Path $dataRoot "logs\postgres.log"
+  Ensure-Folder $pgData
+  Ensure-Folder (Join-Path $dataRoot "logs")
+
+  Resolve-PortablePostgresExecutable "initdb.exe" | Out-Null
+  Resolve-PortablePostgresExecutable "pg_ctl.exe" | Out-Null
+  Resolve-PortablePostgresExecutable "pg_isready.exe" | Out-Null
+  Resolve-PortablePostgresExecutable "createdb.exe" | Out-Null
+
+  if (-not (Test-Path -Path (Join-Path $pgData "PG_VERSION"))) {
+    Write-Host "   - Inicializando data/db..."
+    Invoke-PortablePostgres "initdb.exe" @("-D", $pgData, "-U", $DbUser, "-A", "trust", "-E", "UTF8") | Out-Null
+  }
+
+  $startCode = Invoke-PortablePostgres "pg_ctl.exe" @("-D", $pgData, "-l", $pgLog, "-o", "-p $Port -h 127.0.0.1", "start") $true
+  if ($startCode -ne 0) {
+    Write-Host "   - PostgreSQL podria estar ya iniciado. Continuando con verificacion..."
+  }
+
+  $ready = $false
+  for ($i = 0; $i -lt 60; $i++) {
+    $readyCode = Invoke-PortablePostgres "pg_isready.exe" @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, "-d", "postgres") $true
+    if ($readyCode -eq 0) {
+      $ready = $true
+      break
+    }
+    Start-Sleep -Seconds 2
+  }
+  if (-not $ready) {
+    throw "PostgreSQL portable no quedo listo a tiempo. Revisa data\logs\postgres.log."
+  }
+
+  Invoke-PortablePostgres "createdb.exe" @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, $DbName) $true | Out-Null
+  Write-Host "   - PostgreSQL portable listo en 127.0.0.1:$Port, datos en data\db."
 }
 
 function Invoke-Docker([string[]]$Args) {
@@ -354,7 +411,7 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
 function Start-RunPostgres {
   Write-Host "[4/6] Base de datos local Run: levantando PostgreSQL..."
   if (-not (Ensure-DockerRunning)) {
-    throw "Run requiere Docker para administrar PostgreSQL local en data\db. Instala Docker Desktop o configura un runtime PostgreSQL portable."
+    throw "Run requiere Docker para RUN_DB_MODE=docker. Para no depender de Docker usa RUN_DB_MODE=portable con runtime\postgres\bin."
   }
 
   Push-Location $runRoot
@@ -442,7 +499,10 @@ $frontPort = Get-EnvValue "FRONTEND_PORT" "3000"
 $apiProfile = Get-EnvValue "API_PROFILE" "prod"
 $apiPort = Get-EnvValue "API_PORT" "8080"
 $artifactOnly = To-Bool (Get-EnvValue "MT_ARTIFACT_ONLY" "1") $true
-$runDbMode = (Get-EnvValue "RUN_DB_MODE" "docker").Trim().ToLowerInvariant()
+$runDbMode = (Get-EnvValue "RUN_DB_MODE" "portable").Trim().ToLowerInvariant()
+$dbPort = Get-EnvValue "POSTGRES_PORT" "5434"
+$dbName = Get-EnvValue "POSTGRES_DB" "cotiflow"
+$dbUser = Get-EnvValue "POSTGRES_USER" "cotiflow_user"
 
 Write-Host "[3/6] Verificando modo de ejecucion..."
 
@@ -454,10 +514,12 @@ if ($artifactOnly) {
   if (-not (Test-Path -Path (Join-Path $frontBuild "server.js"))) {
     throw "Falta build/front/server.js. Copia aqui el output standalone del frontend."
   }
-  if ($runDbMode -eq "docker") {
+  if ($runDbMode -eq "portable") {
+    Start-PortablePostgres -Port $dbPort -DbName $dbName -DbUser $dbUser
+  } elseif ($runDbMode -eq "docker") {
     Start-RunPostgres
   } elseif ($runDbMode -ne "external") {
-    throw "RUN_DB_MODE invalido: $runDbMode. Usa docker o external."
+    throw "RUN_DB_MODE invalido: $runDbMode. Usa portable, docker o external."
   }
   Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort
   exit 0
