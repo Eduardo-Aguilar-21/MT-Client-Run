@@ -136,7 +136,8 @@ function Invoke-PortablePostgres([string]$ExeName, [string[]]$PgArgs = @(), [boo
 function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser) {
   Write-Host "[4/6] Base de datos local Run: iniciando PostgreSQL portable..."
   $pgData = Join-Path $dataRoot "db"
-  $pgLog = Join-Path $dataRoot "logs\postgres.log"
+  $pgOutLog = Join-Path $dataRoot "logs\postgres.out.log"
+  $pgErrLog = Join-Path $dataRoot "logs\postgres.err.log"
   Ensure-Folder $pgData
   Ensure-Folder (Join-Path $dataRoot "logs")
 
@@ -153,7 +154,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
   $postgresExe = Resolve-PortablePostgresExecutable "postgres.exe"
   $postgresArgs = @("-D", $pgData, "-p", $Port, "-h", "127.0.0.1")
   Write-Host "   - Ejecutando: postgres.exe $($postgresArgs -join ' ')"
-  $postgresProc = Start-Process -FilePath $postgresExe -ArgumentList $postgresArgs -WorkingDirectory $portablePostgresBin -RedirectStandardOutput $pgLog -RedirectStandardError $pgLog -PassThru -WindowStyle Hidden
+  $postgresProc = Start-Process -FilePath $postgresExe -ArgumentList $postgresArgs -WorkingDirectory $portablePostgresBin -RedirectStandardOutput $pgOutLog -RedirectStandardError $pgErrLog -PassThru -WindowStyle Hidden
   Write-Host "   - PostgreSQL iniciado (PID $($postgresProc.Id))"
 
   $ready = $false
@@ -166,7 +167,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
     Start-Sleep -Seconds 2
   }
   if (-not $ready) {
-    throw "PostgreSQL portable no quedo listo a tiempo. Revisa data\logs\postgres.log."
+    throw "PostgreSQL portable no quedo listo a tiempo. Revisa data\logs\postgres.err.log."
   }
 
   Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, $DbName) -IgnoreFailure $true | Out-Null
