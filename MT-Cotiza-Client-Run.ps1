@@ -183,7 +183,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
         throw "PostgreSQL portable se detuvo antes de quedar listo (codigo $($postgresProc.ExitCode)). Revisa data\logs\postgres.err.log."
       }
     }
-    $readyCode = Invoke-PortablePostgres -ExeName "pg_isready.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", "postgres", "-d", "postgres") -IgnoreFailure $true -Quiet $true
+    $readyCode = Invoke-PortablePostgres -ExeName "pg_isready.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port) -IgnoreFailure $true -Quiet $true
     if ($readyCode -eq 0) {
       $ready = $true
       break
@@ -194,14 +194,19 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
     throw "PostgreSQL portable no quedo listo a tiempo. Revisa data\logs\postgres.err.log y confirma que el puerto $Port no este ocupado."
   }
 
+  $adminUser = "postgres"
+  $adminCheck = & (Resolve-PortablePostgresExecutable "psql.exe") @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1") 2>$null
+  if (($adminCheck -join "").Trim() -ne "1") {
+    $adminUser = $DbUser
+  }
+
   $escapedUser = $DbUser.Replace("'", "''")
   $escapedPassword = $DbPassword.Replace("'", "''")
-  Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", "postgres", "-d", "postgres", "-tc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'") -IgnoreFailure $true -Quiet $true | Out-Null
-  $roleExistsOutput = & (Resolve-PortablePostgresExecutable "psql.exe") @("-h", "127.0.0.1", "-p", $Port, "-U", "postgres", "-d", "postgres", "-tAc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'") 2>$null
+  $roleExistsOutput = & (Resolve-PortablePostgresExecutable "psql.exe") @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'") 2>$null
   if (($roleExistsOutput -join "").Trim() -ne "1") {
-    Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", "postgres", "-d", "postgres", "-c", "CREATE ROLE `"$escapedUser`" LOGIN PASSWORD '$escapedPassword'") | Out-Null
+    Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-c", "CREATE ROLE `"$escapedUser`" LOGIN PASSWORD '$escapedPassword'") | Out-Null
   }
-  Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", "postgres", "-O", $DbUser, $DbName) -IgnoreFailure $true | Out-Null
+  Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-O", $DbUser, $DbName) -IgnoreFailure $true | Out-Null
   Write-Host "   - PostgreSQL portable listo en 127.0.0.1:$Port, datos en data\db."
   if ($postgresProc -ne $null) { return $postgresProc.Id }
   return 0
