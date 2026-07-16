@@ -168,7 +168,9 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
       $cmdFile = Join-Path $dataRoot "run-postgres.cmd"
       $cmd = "cd /d ""$portablePostgresBin"" && ""$postgresExe"" -D ""$pgData"" -p $Port -h 127.0.0.1 >> ""$pgOutLog"" 2>> ""$pgErrLog"""
       Set-Content -Path $cmdFile -Value $cmd -Encoding ASCII
-      Start-Process -FilePath "runas.exe" -ArgumentList @("/trustlevel:0x20000", "`"$cmdFile`"") -WorkingDirectory $runRoot -WindowStyle Hidden | Out-Null
+      $runasCommand = "cmd.exe /c `"$cmdFile`""
+      Write-Host "   - Ejecutando: runas /trustlevel:0x20000 $runasCommand"
+      Start-Process -FilePath "runas.exe" -ArgumentList @("/trustlevel:0x20000", $runasCommand) -WorkingDirectory $runRoot -WindowStyle Hidden | Out-Null
       $postgresProc = $null
     } else {
       throw "PostgreSQL portable se detuvo antes de quedar listo (codigo $($postgresProc.ExitCode)). Revisa data\logs\postgres.err.log."
