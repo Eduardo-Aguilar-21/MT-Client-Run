@@ -179,12 +179,12 @@ function Ensure-DockerRunning {
 
   $desktop = Find-DockerDesktop
   if ($desktop) {
-    Write-Host "Docker no esta activo. Iniciando Docker Desktop..."
+    Write-Host "Docker no esta activo. Iniciando Docker Desktop y esperando el engine..."
     Start-Process -FilePath $desktop | Out-Null
   }
 
   $waited = 0
-  while ($waited -lt 90) {
+  while ($waited -lt 180) {
     Start-Sleep -Seconds 2
     $waited += 2
     if (Test-DockerHealthy) { return $true }
