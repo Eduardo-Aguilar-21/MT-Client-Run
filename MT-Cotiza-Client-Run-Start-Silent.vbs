@@ -1,6 +1,6 @@
 Option Explicit
 
-Dim fso, scriptDir, shell, frontPort, frontUrl, runProcess, i, req, statusCode
+Dim fso, scriptDir, shell, frontPort, frontUrl, runProcess, i, req, statusCode, logsDir, runLog
 
 Set fso = CreateObject("Scripting.FileSystemObject")
 Set shell = CreateObject("WScript.Shell")
@@ -13,8 +13,14 @@ shell.CurrentDirectory = scriptDir
 frontPort = ReadEnvValue("FRONTEND_PORT", "3000")
 frontUrl = "http://localhost:" & frontPort
 
-' Arranca el runner sin consola y sin esperar
-runProcess = "powershell.exe -NoProfile -ExecutionPolicy Bypass -NoLogo -WindowStyle Hidden -File """ & scriptDir & "\MT-Cotiza-Client-Run.ps1"""
+' Prepara logs del launcher silencioso
+logsDir = scriptDir & "\data\logs"
+If Not fso.FolderExists(scriptDir & "\data") Then fso.CreateFolder(scriptDir & "\data")
+If Not fso.FolderExists(logsDir) Then fso.CreateFolder(logsDir)
+runLog = logsDir & "\run.log"
+
+' Arranca el runner sin consola y sin esperar. stdout/stderr quedan en data\logs\run.log
+runProcess = "cmd.exe /c powershell.exe -NoProfile -ExecutionPolicy Bypass -NoLogo -WindowStyle Hidden -File """ & scriptDir & "\MT-Cotiza-Client-Run.ps1""" > """ & runLog & """ 2>&1"
 shell.Run runProcess, 0, False
 
 ' Espera a que el frontend responda y abre navegador

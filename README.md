@@ -139,7 +139,23 @@ Para `external`, ajusta `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` y 
 
 El launcher no compila codigo fuente.
 
+## Limpieza de prueba
+
+Para reiniciar la base local y logs durante pruebas, ejecuta:
+
+```text
+clean-MT-Cotiza-Client-Run.bat
+```
+
+Esto conserva `build/`, `runtime/` y `data/uploads/`.
+
 ## Logs
+
+El arranque silencioso escribe el log principal en:
+
+```text
+data/logs/run.log
+```
 
 En modo standalone, los logs quedan en:
 
