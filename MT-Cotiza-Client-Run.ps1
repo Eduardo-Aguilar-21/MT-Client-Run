@@ -157,11 +157,30 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
   $postgresProc = Start-Process -FilePath $postgresExe -ArgumentList $postgresArgs -WorkingDirectory $portablePostgresBin -RedirectStandardOutput $pgOutLog -RedirectStandardError $pgErrLog -PassThru -WindowStyle Hidden
   Write-Host "   - PostgreSQL iniciado (PID $($postgresProc.Id))"
 
+  Start-Sleep -Seconds 1
+  $postgresProc.Refresh()
+  if ($postgresProc.HasExited) {
+    $postgresErr = ""
+    if (Test-Path -Path $pgErrLog) { $postgresErr = Get-Content -Path $pgErrLog -Raw -ErrorAction SilentlyContinue }
+    if ($postgresErr -like "*privilegios administrativos*") {
+      Write-Host "   - PostgreSQL rechazo privilegios administrativos. Reintentando con token restringido..."
+      $cmdFile = Join-Path $dataRoot "run-postgres.cmd"
+      $cmd = "cd /d ""$portablePostgresBin"" && ""$postgresExe"" -D ""$pgData"" -p $Port -h 127.0.0.1 >> ""$pgOutLog"" 2>> ""$pgErrLog"""
+      Set-Content -Path $cmdFile -Value $cmd -Encoding ASCII
+      Start-Process -FilePath "runas.exe" -ArgumentList @("/trustlevel:0x20000", "`"$cmdFile`"") -WorkingDirectory $runRoot -WindowStyle Hidden | Out-Null
+      $postgresProc = $null
+    } else {
+      throw "PostgreSQL portable se detuvo antes de quedar listo (codigo $($postgresProc.ExitCode)). Revisa data\logs\postgres.err.log."
+    }
+  }
+
   $ready = $false
   for ($i = 0; $i -lt 60; $i++) {
-    $postgresProc.Refresh()
-    if ($postgresProc.HasExited) {
-      throw "PostgreSQL portable se detuvo antes de quedar listo (codigo $($postgresProc.ExitCode)). Revisa data\logs\postgres.err.log."
+    if ($postgresProc -ne $null) {
+      $postgresProc.Refresh()
+      if ($postgresProc.HasExited) {
+        throw "PostgreSQL portable se detuvo antes de quedar listo (codigo $($postgresProc.ExitCode)). Revisa data\logs\postgres.err.log."
+      }
     }
     $readyCode = Invoke-PortablePostgres -ExeName "pg_isready.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port) -IgnoreFailure $true -Quiet $true
     if ($readyCode -eq 0) {
@@ -176,7 +195,8 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
 
   Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, $DbName) -IgnoreFailure $true | Out-Null
   Write-Host "   - PostgreSQL portable listo en 127.0.0.1:$Port, datos en data\db."
-  return $postgresProc.Id
+  if ($postgresProc -ne $null) { return $postgresProc.Id }
+  return 0
 }
 
 function Invoke-Docker([string[]]$Args) {
