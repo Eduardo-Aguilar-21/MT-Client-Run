@@ -152,8 +152,24 @@ function Find-DockerDesktop {
 
 function Test-DockerHealthy {
   if (-not $script:DockerExe) { return $false }
-  & $script:DockerExe info >$null 2>$null
-  return ($LASTEXITCODE -eq 0)
+  $previousErrorAction = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = "Continue"
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $script:DockerExe
+    $psi.Arguments = "info"
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+    $proc = [System.Diagnostics.Process]::Start($psi)
+    $proc.WaitForExit()
+    return ($proc.ExitCode -eq 0)
+  } catch {
+    return $false
+  } finally {
+    $ErrorActionPreference = $previousErrorAction
+  }
 }
 
 function Ensure-DockerRunning {
