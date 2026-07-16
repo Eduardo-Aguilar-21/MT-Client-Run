@@ -133,7 +133,7 @@ function Invoke-PortablePostgres([string]$ExeName, [string[]]$PgArgs = @(), [boo
   return $LASTEXITCODE
 }
 
-function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser) {
+function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser, [string]$DbPassword) {
   Write-Host "[4/6] Base de datos local Run: iniciando PostgreSQL portable..."
   $pgData = Join-Path $dataRoot "db"
   $pgOutLog = Join-Path $dataRoot "logs\postgres.out.log"
@@ -145,10 +145,11 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
   Resolve-PortablePostgresExecutable "pg_ctl.exe" | Out-Null
   Resolve-PortablePostgresExecutable "pg_isready.exe" | Out-Null
   Resolve-PortablePostgresExecutable "createdb.exe" | Out-Null
+  Resolve-PortablePostgresExecutable "psql.exe" | Out-Null
 
   if (-not (Test-Path -Path (Join-Path $pgData "PG_VERSION"))) {
     Write-Host "   - Inicializando data/db..."
-    Invoke-PortablePostgres -ExeName "initdb.exe" -PgArgs @("-D", $pgData, "-U", $DbUser, "-A", "trust", "-E", "UTF8") | Out-Null
+    Invoke-PortablePostgres -ExeName "initdb.exe" -PgArgs @("-D", $pgData, "-U", "postgres", "-A", "trust", "-E", "UTF8") | Out-Null
   }
 
   $postgresExe = Resolve-PortablePostgresExecutable "postgres.exe"
@@ -182,7 +183,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
         throw "PostgreSQL portable se detuvo antes de quedar listo (codigo $($postgresProc.ExitCode)). Revisa data\logs\postgres.err.log."
       }
     }
-    $readyCode = Invoke-PortablePostgres -ExeName "pg_isready.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port) -IgnoreFailure $true -Quiet $true
+    $readyCode = Invoke-PortablePostgres -ExeName "pg_isready.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", "postgres", "-d", "postgres") -IgnoreFailure $true -Quiet $true
     if ($readyCode -eq 0) {
       $ready = $true
       break
@@ -193,7 +194,14 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
     throw "PostgreSQL portable no quedo listo a tiempo. Revisa data\logs\postgres.err.log y confirma que el puerto $Port no este ocupado."
   }
 
-  Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, $DbName) -IgnoreFailure $true | Out-Null
+  $escapedUser = $DbUser.Replace("'", "''")
+  $escapedPassword = $DbPassword.Replace("'", "''")
+  Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", "postgres", "-d", "postgres", "-tc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'") -IgnoreFailure $true -Quiet $true | Out-Null
+  $roleExistsOutput = & (Resolve-PortablePostgresExecutable "psql.exe") @("-h", "127.0.0.1", "-p", $Port, "-U", "postgres", "-d", "postgres", "-tAc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'") 2>$null
+  if (($roleExistsOutput -join "").Trim() -ne "1") {
+    Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", "postgres", "-d", "postgres", "-c", "CREATE ROLE `"$escapedUser`" LOGIN PASSWORD '$escapedPassword'") | Out-Null
+  }
+  Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", "postgres", "-O", $DbUser, $DbName) -IgnoreFailure $true | Out-Null
   Write-Host "   - PostgreSQL portable listo en 127.0.0.1:$Port, datos en data\db."
   if ($postgresProc -ne $null) { return $postgresProc.Id }
   return 0
@@ -532,6 +540,7 @@ $runDbMode = (Get-EnvValue "RUN_DB_MODE" "portable").Trim().ToLowerInvariant()
 $dbPort = Get-EnvValue "POSTGRES_PORT" "5434"
 $dbName = Get-EnvValue "POSTGRES_DB" "cotiflow"
 $dbUser = Get-EnvValue "POSTGRES_USER" "cotiflow_user"
+$dbPassword = Get-EnvValue "POSTGRES_PASSWORD" "cotiflow_password"
 
 Write-Host "[3/6] Verificando modo de ejecucion..."
 
@@ -545,11 +554,16 @@ if ($artifactOnly) {
   }
   $postgresPid = $null
   if ($runDbMode -eq "portable") {
-    $postgresPid = Start-PortablePostgres -Port $dbPort -DbName $dbName -DbUser $dbUser
+    $postgresPid = Start-PortablePostgres -Port $dbPort -DbName $dbName -DbUser $dbUser -DbPassword $dbPassword
   } elseif ($runDbMode -eq "docker") {
     Start-RunPostgres
   } elseif ($runDbMode -ne "external") {
     throw "RUN_DB_MODE invalido: $runDbMode. Usa portable, docker o external."
+  }
+  if ($runDbMode -eq "portable") {
+    [Environment]::SetEnvironmentVariable("SPRING_DATASOURCE_URL", "jdbc:postgresql://127.0.0.1:$dbPort/$dbName", "Process")
+    [Environment]::SetEnvironmentVariable("SPRING_DATASOURCE_USERNAME", $dbUser, "Process")
+    [Environment]::SetEnvironmentVariable("SPRING_DATASOURCE_PASSWORD", $dbPassword, "Process")
   }
   Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort -PostgresPid $postgresPid
   exit 0
