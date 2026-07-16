@@ -20,7 +20,7 @@ If Not fso.FolderExists(logsDir) Then fso.CreateFolder(logsDir)
 runLog = logsDir & "\run.log"
 
 ' Arranca el runner sin consola y sin esperar. stdout/stderr quedan en data\logs\run.log
-runProcess = "cmd.exe /c powershell.exe -NoProfile -ExecutionPolicy Bypass -NoLogo -WindowStyle Hidden -File """ & scriptDir & "\MT-Cotiza-Client-Run.ps1""" > """ & runLog & """ 2>&1"
+runProcess = "cmd.exe /c powershell.exe -NoProfile -ExecutionPolicy Bypass -NoLogo -WindowStyle Hidden -File " & Chr(34) & scriptDir & "\MT-Cotiza-Client-Run.ps1" & Chr(34) & " > " & Chr(34) & runLog & Chr(34) & " 2>&1"
 shell.Run runProcess, 0, False
 
 ' Espera a que el frontend responda y abre navegador
