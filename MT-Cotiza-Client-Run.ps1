@@ -122,10 +122,10 @@ function Resolve-PortablePostgresExecutable([string]$Name) {
   throw "No se encontro PostgreSQL portable: $exe. Coloca PostgreSQL para Windows en runtime\postgres\bin."
 }
 
-function Invoke-PortablePostgres([string]$ExeName, [string[]]$PgArgs = @(), [bool]$IgnoreFailure = $false) {
+function Invoke-PortablePostgres([string]$ExeName, [string[]]$PgArgs = @(), [bool]$IgnoreFailure = $false, [bool]$Quiet = $false) {
   $exe = Resolve-PortablePostgresExecutable $ExeName
   $argsText = $PgArgs -join " "
-  Write-Host "   - Ejecutando: $ExeName $argsText"
+  if (-not $Quiet) { Write-Host "   - Ejecutando: $ExeName $argsText" }
   & $exe @PgArgs
   if ($LASTEXITCODE -ne 0 -and -not $IgnoreFailure) {
     throw "Fallo comando $ExeName $argsText (codigo $LASTEXITCODE)"
@@ -159,7 +159,11 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
 
   $ready = $false
   for ($i = 0; $i -lt 60; $i++) {
-    $readyCode = Invoke-PortablePostgres -ExeName "pg_isready.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, "-d", "postgres") -IgnoreFailure $true
+    $postgresProc.Refresh()
+    if ($postgresProc.HasExited) {
+      throw "PostgreSQL portable se detuvo antes de quedar listo (codigo $($postgresProc.ExitCode)). Revisa data\logs\postgres.err.log."
+    }
+    $readyCode = Invoke-PortablePostgres -ExeName "pg_isready.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port) -IgnoreFailure $true -Quiet $true
     if ($readyCode -eq 0) {
       $ready = $true
       break
@@ -167,7 +171,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser)
     Start-Sleep -Seconds 2
   }
   if (-not $ready) {
-    throw "PostgreSQL portable no quedo listo a tiempo. Revisa data\logs\postgres.err.log."
+    throw "PostgreSQL portable no quedo listo a tiempo. Revisa data\logs\postgres.err.log y confirma que el puerto $Port no este ocupado."
   }
 
   Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, $DbName) -IgnoreFailure $true | Out-Null
