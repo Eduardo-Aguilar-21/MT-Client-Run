@@ -1,92 +1,147 @@
-﻿# MT-Cotiza - Inicio en un clic
+# MT-Cotiza Client Run
 
-Esta carpeta controla el arranque local de API + Front.
+Launcher local para ejecutar MT-Cotiza Client desde artefactos ya compilados.
 
-## Estructura
+## Regla principal
 
-- `start-MT-Cotiza-Client.bat`: inicio en un clic.
-- `stop-MT-Cotiza-Client.bat`: detiene servicios.
-- `MT-Cotiza-Client-Run.ps1`: orquestador.
-- `docker-compose.yml`: orquesta servicios cuando hay Docker.
-- `.env`: variables de entorno.
-- `build/`
-  - `api/`: JAR de la API.
-  - `front/`: frontend standalone de Next.js.
-- `data/`
-  - `db/`, `uploads/`, `logs/`.
+Esta carpeta no debe compilar el backend ni el frontend en la maquina del cliente.
 
-## Arranque recomendado (cliente)
+El cliente solo debe recibir/copiar artefactos en:
 
-Por defecto este paquete estÃ¡ configurado para **arrancar sin Docker** (solo con artefactos ya compilados).
+```text
+build/api/
+build/front/
+```
 
-1. Doble click en `start-MT-Cotiza-Client.bat` (modo silencioso, sin consola).
-2. Al levantar, abre automáticamente `http://localhost:3000` (o el puerto definido por `FRONTEND_PORT`).
+Luego ejecuta:
 
-> Si quieres forzar modo Docker, cambia en `.env`: `MT_ARTIFACT_ONLY=0`.
+```text
+start-MT-Cotiza-Client.bat
+```
 
-## Modo rÃ¡pido (para uso diario)
+## Estructura esperada
 
-Por defecto el script usa `MT_FAST_START=1`:
-- Reutiliza artefactos si estÃ¡n disponibles y al dia.
-- No recompila backend/frontend si no cambiaron fuentes.
-- Esto evita esperas largas todos los dÃ­as.
+```text
+MT-Client-Run/
+  start-MT-Cotiza-Client.bat
+  stop-MT-Cotiza-Client.bat
+  MT-Cotiza-Client-Run.ps1
+  MT-Cotiza-Client-Run-Start-Silent.vbs
+  .env
+  build/
+    api/
+      core-spring-monolith-0.0.1-SNAPSHOT.jar
+    front/
+      server.js
+      package.json
+      .next/
+      public/
+      node_modules/
+  data/
+    db/
+    uploads/
+    logs/
+  runtime/
+    java/
+    node/
+```
 
-Opciones:
-- `.env` `MT_FAST_START=1|0` (default `1`)
-- `.env` `MT_FORCE_REBUILD=1` (fuerza recompilacion completa)
-- `.env` `MT_CLEAN_DATA=1|0` (default `0`, para no borrar DB local entre arranques)
+## Actualizar API
 
-### MT_ARTIFACT_ONLY
+Compilar fuera de Run, desde `MT-Cotiza-Client-API`:
 
-Este archivo funciona para distribuciÃ³n al cliente:
+```bash
+bash mvnw clean package
+```
 
-- `MT_ARTIFACT_ONLY=1` (default): no usa Docker para levantar. Arranca **solo** con artefactos existentes.
-  - Requiere `build/api/*.jar`
-  - Requiere `build/front/server.js` y su Ã¡rbol (`public`, `.next/static`, etc.)
-- `MT_ARTIFACT_ONLY=0`: usa Docker para compilar/levantar si estÃ¡ disponible.
+En Windows puedes usar:
 
-## Entrega de actualizaciones (sin nada extra para el cliente)
+```bat
+mvnw.cmd clean package
+```
 
-Para cada actualizaciÃ³n, el cliente debe reemplazar Ãºnicamente:
+Copiar el JAR generado:
 
-1. `MT-Client-Run/build/api/`
-   - `*.jar` de la API nueva.
+```text
+MT-Cotiza-Client-API/target/core-spring-monolith-0.0.1-SNAPSHOT.jar
+```
 
-2. `MT-Client-Run/build/front/`
-   - `server.js`
-   - `package.json`
-   - `.next/static/` (si cambiÃ³ frontend)
-   - `public/` (si cambiÃ³)
+a:
 
-3. `MT-Client-Run/.env` (solo si cambian URLs, puertos o secrets).
+```text
+MT-Client-Run/build/api/
+```
 
-4. `MT-Client-Run/data/db/` y `MT-Client-Run/data/uploads/`
-   - Solo si tÃº entregas datos nuevos/correcciones para producciÃ³n local.
+## Actualizar Front
 
-Notas importantes:
-- No hace falta incluir cÃ³digo fuente de `MT-Cotiza-Client-API` ni `MT-Cotiza-Client-Front`.
-- El cliente no debe correr compilaciones ni bajar imÃ¡genes desde cero.
+Compilar fuera de Run, desde `MT-Cotiza-Client-Front`:
 
-## Modo sin Docker
+```bash
+npm run build:run
+```
 
-El script intenta este modo solo si Docker no estÃ¡ disponible y ya existen:
-- `build/api` con un `.jar` vÃ¡lido
-- `build/front/server.js`
-- Java y Node disponibles (`runtime\java\bin\java.exe`, `runtime\node\node.exe` o instalados en el equipo)
+Copiar TODO el contenido de:
 
-Si quieres que el cliente no instale nada adicional, empaqueta en:
-- `runtime\java\bin\java.exe` (JRE/JDK 17)
-- `runtime\node\node.exe` (Node 20)
+```text
+MT-Cotiza-Client-Front/dist/run-front/
+```
 
-Nota: en modo sin Docker se requiere base de datos externa (no levanta PostgreSQL de Docker).
+a:
+
+```text
+MT-Client-Run/build/front/
+```
+
+Incluye `node_modules` si aparece dentro de `dist/run-front`; ese es el standalone minimo de Next, no el `node_modules` del repo fuente.
+
+## Configuracion
+
+Copia `.env.example` como `.env` y ajusta los valores reales.
+
+Variables importantes:
+
+```text
+MT_ARTIFACT_ONLY=1
+API_PORT=8080
+FRONTEND_PORT=3000
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5434/cotiflow
+SPRING_DATASOURCE_USERNAME=cotiflow_user
+SPRING_DATASOURCE_PASSWORD=cotiflow_password
+JWT_SECRET_KEY=...
+```
+
+## Base de datos
+
+El launcher arranca API y Front. La base de datos debe estar disponible segun `SPRING_DATASOURCE_URL`.
+
+Para cliente final hay que definir uno de estos caminos:
+
+```text
+1. PostgreSQL local/instalado.
+2. PostgreSQL levantado por Docker.
+3. PostgreSQL portable empaquetado aparte.
+```
+
+El launcher no compila codigo fuente.
+
+## Logs
+
+En modo standalone, los logs quedan en:
+
+```text
+data/logs/api.out.log
+data/logs/api.err.log
+data/logs/front.out.log
+data/logs/front.err.log
+```
+
+Ademas la API puede escribir su log interno en el valor de `LOG_FILE_NAME`.
 
 ## Detener
 
-- Doble click en `stop-MT-Cotiza-Client.bat`.
+Ejecutar:
 
-## Puertos
-
-- API: `http://localhost:8080`
-- Front: `http://localhost:3000`
-- DB (con Docker): `5434`
-
+```text
+stop-MT-Cotiza-Client.bat
+```

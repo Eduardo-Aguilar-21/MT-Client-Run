@@ -50,11 +50,26 @@ function Get-EnvValue([string]$Key, [string]$Default = "") {
     Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and $_.TrimStart() -notlike "#*" } |
     ForEach-Object {
       $parts = $_ -split "=", 2
-      if ($parts.Count -ge 2 -and $parts[0] -eq $Key) { $_ }
+      if ($parts.Count -ge 2 -and $parts[0].Trim() -eq $Key) { $_ }
     } |
     Select-Object -First 1
   if (-not $line) { return $Default }
-  return ($line -replace "^[^=]*=", "")
+  return ($line -replace "^[^=]*=", "").Trim()
+}
+
+function Import-EnvFile {
+  if (-not (Test-Path -Path $envFile)) { return }
+  Get-Content -Path $envFile | ForEach-Object {
+    $line = $_.Trim()
+    if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith("#")) { return }
+    $parts = $line -split "=", 2
+    if ($parts.Count -lt 2) { return }
+    $key = $parts[0].Trim()
+    $value = $parts[1].Trim()
+    if (-not [string]::IsNullOrWhiteSpace($key)) {
+      [Environment]::SetEnvironmentVariable($key, $value, "Process")
+    }
+  }
 }
 
 function To-Bool([string]$Value, [bool]$Default = $false) {
@@ -161,7 +176,7 @@ function Build-ApiWithDocker([string]$SourcePath, [string]$OutputPath) {
   if (-not (Ensure-DockerImage "maven:3.9-eclipse-temurin-17")) {
     throw "No se encontro la imagen Docker maven:3.9-eclipse-temurin-17. Activa MT_ARTIFACT_ONLY=1 o descarga la imagen manualmente (docker pull maven:3.9-eclipse-temurin-17)."
   }
-  Invoke-Docker @("run", "--rm", "-v", "${SourcePath}:/workspace", "-w", "/workspace", "maven:3.9-eclipse-temurin-17", "mvn", "-DskipTests", "package")
+  Invoke-Docker @("run", "--rm", "-v", "${SourcePath}:/workspace", "-w", "/workspace", "maven:3.9-eclipse-temurin-17", "mvn", "package")
 
   $targetPath = Join-Path $SourcePath "target"
   if (-not (Test-Path -Path $targetPath)) {
@@ -245,7 +260,7 @@ function Get-StandaloneServer {
   }
 }
 
-function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfile) {
+function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfile, [string]$ApiPort) {
   $javaExe = Resolve-Executable "java" $javaCandidatePaths
   $nodeExe = Resolve-Executable "node" $nodeCandidatePaths
   if (-not $javaExe) {
@@ -258,18 +273,25 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   $servers = Get-StandaloneServer
   Write-Host "[4/6] Modo sin Docker: iniciando procesos locales..."
 
+  Import-EnvFile
   $envSet = @{
     "SPRING_PROFILES_ACTIVE" = $ApiProfile
-    "SERVER_PORT" = "8080"
+    "SERVER_PORT" = $ApiPort
     "NEXT_PUBLIC_API_URL" = $ApiUrl
+    "PORT" = $FrontPort
   }
   foreach ($k in $envSet.Keys) {
     [Environment]::SetEnvironmentVariable($k, $envSet[$k], "Process")
   }
 
-  $apiProc = Start-Process -FilePath $javaExe -ArgumentList @("-jar", $servers.ApiJar) -WorkingDirectory $apiBuild -PassThru -WindowStyle Minimized
+  $apiOutLog = Join-Path $dataRoot "logs\api.out.log"
+  $apiErrLog = Join-Path $dataRoot "logs\api.err.log"
+  $frontOutLog = Join-Path $dataRoot "logs\front.out.log"
+  $frontErrLog = Join-Path $dataRoot "logs\front.err.log"
+
+  $apiProc = Start-Process -FilePath $javaExe -ArgumentList @("-jar", $servers.ApiJar) -WorkingDirectory $apiBuild -RedirectStandardOutput $apiOutLog -RedirectStandardError $apiErrLog -PassThru -WindowStyle Minimized
   Write-Host "   - API iniciada (PID $($apiProc.Id))"
-  $frontProc = Start-Process -FilePath $nodeExe -ArgumentList "server.js" -WorkingDirectory $frontBuild -PassThru -WindowStyle Minimized
+  $frontProc = Start-Process -FilePath $nodeExe -ArgumentList "server.js" -WorkingDirectory $frontBuild -RedirectStandardOutput $frontOutLog -RedirectStandardError $frontErrLog -PassThru -WindowStyle Minimized
   Write-Host "   - Front iniciado (PID $($frontProc.Id))"
 
   @{
@@ -294,7 +316,9 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
     Start-Process $frontUrl
   }
   Write-Host "Modo standalone activo. Ejecutando API y Front con java/node locales."
-  Write-Host "Nota: la base de datos debe estar disponible por URL."
+  Write-Host "Logs API: $apiOutLog | $apiErrLog"
+  Write-Host "Logs Front: $frontOutLog | $frontErrLog"
+  Write-Host "Nota: la base de datos debe estar disponible por URL definida en .env."
 }
 
 function Start-Docker([string]$frontPort) {
@@ -356,11 +380,10 @@ Write-Host "[2/6] Leyendo configuracion..."
 $apiUrl = Get-EnvValue "NEXT_PUBLIC_API_URL" "http://localhost:8080/api"
 $frontPort = Get-EnvValue "FRONTEND_PORT" "3000"
 $apiProfile = Get-EnvValue "API_PROFILE" "prod"
+$apiPort = Get-EnvValue "API_PORT" "8080"
 $artifactOnly = To-Bool (Get-EnvValue "MT_ARTIFACT_ONLY" "1") $true
 
-Write-Host "[3/6] Verificando rutas de proyecto..."
-if (-not (Test-Path -Path $apiDir)) { throw "No existe $apiDir" }
-if (-not (Test-Path -Path $frontDir)) { throw "No existe $frontDir" }
+Write-Host "[3/6] Verificando modo de ejecucion..."
 
 if ($artifactOnly) {
   Write-Host "[4/6] Verificando artefactos listos (modo MT_ARTIFACT_ONLY)..."
@@ -370,14 +393,18 @@ if ($artifactOnly) {
   if (-not (Test-Path -Path (Join-Path $frontBuild "server.js"))) {
     throw "Falta build/front/server.js. Copia aqui el output standalone del frontend."
   }
-  Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile
+  Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort
   exit 0
 }
+
+Write-Host "[4/6] Verificando rutas de proyecto para modo build/Docker..."
+if (-not (Test-Path -Path $apiDir)) { throw "No existe $apiDir" }
+if (-not (Test-Path -Path $frontDir)) { throw "No existe $frontDir" }
 
 $useDocker = Ensure-DockerRunning
 if (-not $useDocker) {
   if ((Test-Path (Join-Path $apiBuild "*.jar")) -and (Test-Path (Join-Path $frontBuild "server.js"))) {
-    Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile
+    Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort
     exit 0
   }
   throw "Docker no esta disponible y no hay build standalone completo. Ejecuta esta carpeta en una maquina con Docker o copia build/api y build/front ya compilados y coloca runtime java/node."
