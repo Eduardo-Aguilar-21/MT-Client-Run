@@ -268,8 +268,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   [Environment]::SetEnvironmentVariable("PGCONNECT_TIMEOUT", "2", "Process")
   $adminUser = "postgres"
   $adminReady = $false
-  $adminCheck = @()
-  for ($i = 0; $i -lt 20; $i++) {
+  for ($i = 0; $i -lt 10; $i++) {
     $adminCheck = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1")
     if ($adminCheck.ExitCode -eq 0 -and (($adminCheck.Output -join "").Trim()) -eq "1") {
       $adminReady = $true
@@ -277,22 +276,18 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
     }
     Start-Sleep -Seconds 1
   }
-  if (-not $adminReady) {
-    throw "PostgreSQL iniciado pero no responde con usuario postgres para inicializar rol base. Revisa data\logs\postgres.err.log."
-  }
 
-  $escapedUser = $DbUser.Replace("'", "''")
-  $escapedPassword = $DbPassword.Replace("'", "''")
-  $roleExistsOutput = $null
-  for ($i = 0; $i -lt 20; $i++) {
+  if ($adminReady) {
+    $escapedUser = $DbUser.Replace("'", "''")
+    $escapedPassword = $DbPassword.Replace("'", "''")
     $roleExistsResult = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'")
-    if ($roleExistsResult.ExitCode -eq 0) { $roleExistsOutput = $roleExistsResult.Output; break }
-    Start-Sleep -Seconds 1
+    if (($roleExistsResult.Output -join "").Trim() -ne "1") {
+      Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-c", "CREATE ROLE `"$escapedUser`" LOGIN PASSWORD '$escapedPassword'") -IgnoreFailure $true | Out-Null
+    }
+    Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-O", $DbUser, $DbName) -IgnoreFailure $true | Out-Null
+  } else {
+    Write-Host "   - PostgreSQL esta aceptando conexiones, pero no se pudo usar postgres para bootstrap. Continuando con DB existente."
   }
-  if (($roleExistsOutput -join "").Trim() -ne "1") {
-    Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-c", "CREATE ROLE `"$escapedUser`" LOGIN PASSWORD '$escapedPassword'") | Out-Null
-  }
-  Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-O", $DbUser, $DbName) -IgnoreFailure $true | Out-Null
   Write-Host "   - PostgreSQL portable listo en 127.0.0.1:$Port, datos en data\db."
   if ($postgresProc -ne $null) { return $postgresProc.Id }
   return 0
