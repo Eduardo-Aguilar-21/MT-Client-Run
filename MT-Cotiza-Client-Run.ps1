@@ -391,7 +391,7 @@ function Get-StandaloneServer {
   }
 }
 
-function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfile, [string]$ApiPort, [int]$PostgresPid = 0) {
+function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfile, [string]$ApiPort, [string]$DbUrl, [string]$DbUser, [string]$DbPassword, [int]$PostgresPid = 0) {
   $javaExe = Resolve-Executable "java" $javaCandidatePaths
   $nodeExe = Resolve-Executable "node" $nodeCandidatePaths
   if (-not $javaExe) {
@@ -414,6 +414,9 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
     "PORT" = $FrontPort
     "UPLOAD_DIR" = $uploadDir
     "LOG_FILE_NAME" = $apiAppLog
+    "SPRING_DATASOURCE_URL" = $DbUrl
+    "SPRING_DATASOURCE_USERNAME" = $DbUser
+    "SPRING_DATASOURCE_PASSWORD" = $DbPassword
   }
   foreach ($k in $envSet.Keys) {
     [Environment]::SetEnvironmentVariable($k, $envSet[$k], "Process")
@@ -424,7 +427,14 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   $frontOutLog = Join-Path $dataRoot "logs\front.out.log"
   $frontErrLog = Join-Path $dataRoot "logs\front.err.log"
 
-  $apiProc = Start-Process -FilePath $javaExe -ArgumentList @("-jar", $servers.ApiJar) -WorkingDirectory $apiBuild -RedirectStandardOutput $apiOutLog -RedirectStandardError $apiErrLog -PassThru -WindowStyle Minimized
+  $apiArgs = @(
+    "-Dspring.datasource.url=$DbUrl"
+    "-Dspring.datasource.username=$DbUser"
+    "-Dspring.datasource.password=$DbPassword"
+    "-jar",
+    $servers.ApiJar
+  )
+  $apiProc = Start-Process -FilePath $javaExe -ArgumentList $apiArgs -WorkingDirectory $apiBuild -RedirectStandardOutput $apiOutLog -RedirectStandardError $apiErrLog -PassThru -WindowStyle Minimized
   Write-Host "   - API iniciada (PID $($apiProc.Id))"
   $frontProc = Start-Process -FilePath $nodeExe -ArgumentList "server.js" -WorkingDirectory $frontBuild -RedirectStandardOutput $frontOutLog -RedirectStandardError $frontErrLog -PassThru -WindowStyle Minimized
   Write-Host "   - Front iniciado (PID $($frontProc.Id))"
@@ -566,6 +576,14 @@ if ($artifactOnly) {
     throw "Falta build/front/server.js. Copia aqui el output standalone del frontend."
   }
   $postgresPid = $null
+  $envDbUrl = Get-EnvValue "SPRING_DATASOURCE_URL" ""
+  $envDbUser = Get-EnvValue "SPRING_DATASOURCE_USERNAME" ""
+  $envDbPassword = Get-EnvValue "SPRING_DATASOURCE_PASSWORD" ""
+
+  $resolvedDbUrl = "jdbc:postgresql://127.0.0.1:$dbPort/$dbName"
+  $resolvedDbUser = $dbUser
+  $resolvedDbPassword = $dbPassword
+
   if ($runDbMode -eq "portable") {
     $postgresPid = Start-PortablePostgres -Port $dbPort -DbName $dbName -DbUser $dbUser -DbPassword $dbPassword
   } elseif ($runDbMode -eq "docker") {
@@ -573,12 +591,18 @@ if ($artifactOnly) {
   } elseif ($runDbMode -ne "external") {
     throw "RUN_DB_MODE invalido: $runDbMode. Usa portable, docker o external."
   }
-  if ($runDbMode -eq "portable") {
-    [Environment]::SetEnvironmentVariable("SPRING_DATASOURCE_URL", "jdbc:postgresql://127.0.0.1:$dbPort/$dbName", "Process")
-    [Environment]::SetEnvironmentVariable("SPRING_DATASOURCE_USERNAME", $dbUser, "Process")
-    [Environment]::SetEnvironmentVariable("SPRING_DATASOURCE_PASSWORD", $dbPassword, "Process")
+
+  if ($runDbMode -ne "portable" -and -not [string]::IsNullOrWhiteSpace($envDbUrl)) {
+    $resolvedDbUrl = $envDbUrl.Trim()
   }
-  Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort -PostgresPid $postgresPid
+  if (-not [string]::IsNullOrWhiteSpace($envDbUser)) {
+    $resolvedDbUser = $envDbUser
+  }
+  if (-not [string]::IsNullOrWhiteSpace($envDbPassword)) {
+    $resolvedDbPassword = $envDbPassword
+  }
+
+  Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort -DbUrl $resolvedDbUrl -DbUser $resolvedDbUser -DbPassword $resolvedDbPassword -PostgresPid $postgresPid
   exit 0
 }
 
@@ -588,8 +612,22 @@ if (-not (Test-Path -Path $frontDir)) { throw "No existe $frontDir" }
 
 $useDocker = Ensure-DockerRunning
 if (-not $useDocker) {
+  $fallbackDbUrl = Get-EnvValue "SPRING_DATASOURCE_URL" ""
+  $fallbackDbUser = Get-EnvValue "SPRING_DATASOURCE_USERNAME" ""
+  $fallbackDbPassword = Get-EnvValue "SPRING_DATASOURCE_PASSWORD" ""
+
+  if ([string]::IsNullOrWhiteSpace($fallbackDbUrl)) {
+    $fallbackDbUrl = "jdbc:postgresql://127.0.0.1:$dbPort/$dbName"
+  }
+  if ([string]::IsNullOrWhiteSpace($fallbackDbUser)) {
+    $fallbackDbUser = $dbUser
+  }
+  if ([string]::IsNullOrWhiteSpace($fallbackDbPassword)) {
+    $fallbackDbPassword = $dbPassword
+  }
+
   if ((Test-Path (Join-Path $apiBuild "*.jar")) -and (Test-Path (Join-Path $frontBuild "server.js"))) {
-    Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort
+    Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort -DbUrl $fallbackDbUrl -DbUser $fallbackDbUser -DbPassword $fallbackDbPassword
     exit 0
   }
   throw "Docker no esta disponible y no hay build standalone completo. Ejecuta esta carpeta en una maquina con Docker o copia build/api y build/front ya compilados y coloca runtime java/node."
