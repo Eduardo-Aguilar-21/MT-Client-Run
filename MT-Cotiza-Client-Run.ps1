@@ -218,6 +218,12 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
     Invoke-PortablePostgres -ExeName "initdb.exe" -PgArgs @("-D", $pgData, "-U", "postgres", "-A", "trust", "-E", "UTF8") | Out-Null
   }
 
+  & (Resolve-PortablePostgresExecutable "pg_isready.exe") @("-h", "127.0.0.1", "-p", $Port) >$null 2>$null
+  if ($LASTEXITCODE -eq 0) {
+    Write-Host "   - PostgreSQL portable ya estaba listo en 127.0.0.1:$Port."
+    return 0
+  }
+
   $postgresExe = Resolve-PortablePostgresExecutable "postgres.exe"
   $postgresArgs = @("-D", $pgData, "-p", $Port, "-h", "127.0.0.1")
   Write-Host "   - Ejecutando: postgres.exe $($postgresArgs -join ' ')"
@@ -523,12 +529,12 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
 
   $frontUrl = "http://localhost:$FrontPort/login"
   $ready = $false
-  for ($i = 0; $i -lt 60; $i++) {
+  for ($i = 0; $i -lt 30; $i++) {
     try {
-      $resp = Invoke-WebRequest -UseBasicParsing -Uri $frontUrl -Method Get -TimeoutSec 2
+      $resp = Invoke-WebRequest -UseBasicParsing -Uri $frontUrl -Method Get -TimeoutSec 1
       if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 500) { $ready = $true; break }
     } catch {}
-    Start-Sleep -Seconds 2
+    Start-Sleep -Seconds 1
   }
   if (-not $ready) {
     Write-Host "No pude confirmar $frontUrl aun, pero intentare abrirlo igualmente."

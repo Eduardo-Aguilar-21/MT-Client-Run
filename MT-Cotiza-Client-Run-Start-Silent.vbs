@@ -11,7 +11,7 @@ shell.CurrentDirectory = scriptDir
 
 ' Lee el puerto del front desde .env (si existe) para abrir la URL correcta
 frontPort = ReadEnvValue("FRONTEND_PORT", "3000")
-frontUrl = "http://localhost:" & frontPort
+frontUrl = "http://localhost:" & frontPort & "/login"
 
 ' Prepara logs del launcher silencioso
 logsDir = scriptDir & "\data\logs"
@@ -24,7 +24,7 @@ runProcess = "cmd.exe /c powershell.exe -NoProfile -ExecutionPolicy Bypass -NoLo
 shell.Run runProcess, 0, False
 
 ' Espera a que el frontend responda y abre navegador
-For i = 1 To 180
+For i = 1 To 30
     statusCode = GetHttpStatus(frontUrl)
     If statusCode >= 200 And statusCode < 500 Then
         shell.Run "cmd /c start """" """ & frontUrl & """", 0, False
@@ -32,6 +32,9 @@ For i = 1 To 180
     End If
     WScript.Sleep 1000
 Next
+
+' Si el front tarda mas, igual abre el navegador para no dejar al usuario sin feedback.
+shell.Run "cmd /c start """" """ & frontUrl & """", 0, False
 
 Function ReadEnvValue(ByVal key, ByVal defaultValue)
   Dim envFile, line, eqPos, name, value
@@ -69,6 +72,7 @@ End Function
 Function GetHttpStatus(ByVal url)
   On Error Resume Next
   Set req = CreateObject("WinHttp.WinHttpRequest.5.1")
+  req.SetTimeouts 1000, 1000, 1000, 1000
   req.Open "GET", url, False
   req.Send
   GetHttpStatus = req.Status
