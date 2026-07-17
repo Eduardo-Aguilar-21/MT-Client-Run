@@ -161,13 +161,13 @@ function Get-LatestSourceWrite([string]$Path, [string[]]$SkipSegments) {
   return $last.Maximum
 }
 
-function Resolve-Executable([string]$commandName, [string[]]$candidates) {
-  $cmd = Get-Command $commandName -ErrorAction SilentlyContinue
-  if ($cmd) { return $cmd.Source }
-  foreach ($path in $candidates) {
-    if ($path -and (Test-Path -Path $path)) { return $path }
+function Resolve-Executable([string], [string[]]) {
+  foreach ( in ) {
+    if ( -and (Test-Path -Path )) { return  }
   }
-  return $null
+   = Get-Command  -ErrorAction SilentlyContinue
+  if () { return .Source }
+  return 
 }
 
 function Resolve-PortablePostgresExecutable([string]$Name) {
