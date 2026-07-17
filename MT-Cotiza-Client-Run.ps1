@@ -68,6 +68,31 @@ function Get-EnvValue([string]$Key, [string]$Default = "") {
   return ($line -replace "^[^=]*=", "").Trim()
 }
 
+function Resolve-DatabaseCredentials([string]$RunDbMode, [string]$DbPort, [string]$DbName, [string]$DefaultDbUser, [string]$DefaultDbPassword) {
+  $mode = if ([string]::IsNullOrWhiteSpace($RunDbMode)) { "external" } else { $RunDbMode.ToLowerInvariant().Trim() }
+  $resultUrl = "jdbc:postgresql://127.0.0.1:$DbPort/$DbName"
+  $resultUser = Get-EnvValue "POSTGRES_USER" $DefaultDbUser
+  $resultPassword = Get-EnvValue "POSTGRES_PASSWORD" $DefaultDbPassword
+
+  if ($mode -ne "external") {
+    if ($mode -eq "portable" -or $mode -eq "docker") {
+      Write-Host "   - Ejecutando en modo $mode: usando credenciales administradas por Run (POSTGRES_*)."
+      return @{ Url = $resultUrl; User = $resultUser; Password = $resultPassword; }
+    }
+    throw "RUN_DB_MODE invalido: $RunDbMode. Usa portable, docker o external."
+  }
+
+  $externalUrl = Get-EnvValue "SPRING_DATASOURCE_URL" ""
+  $externalUser = Get-EnvValue "SPRING_DATASOURCE_USERNAME" ""
+  $externalPassword = Get-EnvValue "SPRING_DATASOURCE_PASSWORD" ""
+
+  Write-Host "   - Ejecutando en modo external: respetando datasource del .env (SPRING_DATASOURCE_*)."
+  if (-not [string]::IsNullOrWhiteSpace($externalUrl)) { $resultUrl = $externalUrl.Trim() }
+  if (-not [string]::IsNullOrWhiteSpace($externalUser)) { $resultUser = $externalUser.Trim() }
+  if (-not [string]::IsNullOrWhiteSpace($externalPassword)) { $resultPassword = $externalPassword.Trim() }
+
+  return @{ Url = $resultUrl; User = $resultUser; Password = $resultPassword; }
+}
 function Import-EnvFile {
   if (-not (Test-Path -Path $envFile)) { return }
   Get-Content -Path $envFile | ForEach-Object {
@@ -590,33 +615,17 @@ if ($artifactOnly) {
     throw "Falta build/front/server.js. Copia aqui el output standalone del frontend."
   }
   $postgresPid = $null
-  $envDbUrl = Get-EnvValue "SPRING_DATASOURCE_URL" ""
-  $envDbUser = Get-EnvValue "SPRING_DATASOURCE_USERNAME" ""
-  $envDbPassword = Get-EnvValue "SPRING_DATASOURCE_PASSWORD" ""
-
-  $resolvedDbUrl = "jdbc:postgresql://127.0.0.1:$dbPort/$dbName"
-  $resolvedDbUser = $dbUser
-  $resolvedDbPassword = $dbPassword
+  $resolvedDbConfig = Resolve-DatabaseCredentials -RunDbMode $runDbMode -DbPort $dbPort -DbName $dbName -DefaultDbUser $dbUser -DefaultDbPassword $dbPassword
 
   if ($runDbMode -eq "portable") {
-    $postgresPid = Start-PortablePostgres -Port $dbPort -DbName $dbName -DbUser $dbUser -DbPassword $dbPassword
+    $postgresPid = Start-PortablePostgres -Port $dbPort -DbName $dbName -DbUser $resolvedDbConfig.User -DbPassword $resolvedDbConfig.Password
   } elseif ($runDbMode -eq "docker") {
     Start-RunPostgres
   } elseif ($runDbMode -ne "external") {
     throw "RUN_DB_MODE invalido: $runDbMode. Usa portable, docker o external."
   }
 
-  if ($runDbMode -ne "portable" -and -not [string]::IsNullOrWhiteSpace($envDbUrl)) {
-    $resolvedDbUrl = $envDbUrl.Trim()
-  }
-  if (-not [string]::IsNullOrWhiteSpace($envDbUser)) {
-    $resolvedDbUser = $envDbUser
-  }
-  if (-not [string]::IsNullOrWhiteSpace($envDbPassword)) {
-    $resolvedDbPassword = $envDbPassword
-  }
-
-  Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort -DbUrl $resolvedDbUrl -DbUser $resolvedDbUser -DbPassword $resolvedDbPassword -PostgresPid $postgresPid
+  Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort -DbUrl $resolvedDbConfig.Url -DbUser $resolvedDbConfig.User -DbPassword $resolvedDbConfig.Password -PostgresPid $postgresPid
   exit 0
 }
 
@@ -626,22 +635,18 @@ if (-not (Test-Path -Path $frontDir)) { throw "No existe $frontDir" }
 
 $useDocker = Ensure-DockerRunning
 if (-not $useDocker) {
-  $fallbackDbUrl = Get-EnvValue "SPRING_DATASOURCE_URL" ""
-  $fallbackDbUser = Get-EnvValue "SPRING_DATASOURCE_USERNAME" ""
-  $fallbackDbPassword = Get-EnvValue "SPRING_DATASOURCE_PASSWORD" ""
-
-  if ([string]::IsNullOrWhiteSpace($fallbackDbUrl)) {
-    $fallbackDbUrl = "jdbc:postgresql://127.0.0.1:$dbPort/$dbName"
+  $fallbackDbConfig = Resolve-DatabaseCredentials -RunDbMode $runDbMode -DbPort $dbPort -DbName $dbName -DefaultDbUser $dbUser -DefaultDbPassword $dbPassword
+  if ($runDbMode -eq "portable") {
+    $fallbackPid = Start-PortablePostgres -Port $dbPort -DbName $dbName -DbUser $fallbackDbConfig.User -DbPassword $fallbackDbConfig.Password
+    Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort -DbUrl $fallbackDbConfig.Url -DbUser $fallbackDbConfig.User -DbPassword $fallbackDbConfig.Password -PostgresPid $fallbackPid
+    exit 0
   }
-  if ([string]::IsNullOrWhiteSpace($fallbackDbUser)) {
-    $fallbackDbUser = $dbUser
-  }
-  if ([string]::IsNullOrWhiteSpace($fallbackDbPassword)) {
-    $fallbackDbPassword = $dbPassword
+  if ($runDbMode -eq "docker") {
+    throw "Docker no esta disponible y RUN_DB_MODE esta en docker. Cambia a portable o external para iniciar sin Docker."
   }
 
   if ((Test-Path (Join-Path $apiBuild "*.jar")) -and (Test-Path (Join-Path $frontBuild "server.js"))) {
-    Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort -DbUrl $fallbackDbUrl -DbUser $fallbackDbUser -DbPassword $fallbackDbPassword
+    Start-Standalone -ApiUrl $apiUrl -FrontPort $frontPort -ApiProfile $apiProfile -ApiPort $apiPort -DbUrl $fallbackDbConfig.Url -DbUser $fallbackDbConfig.User -DbPassword $fallbackDbConfig.Password
     exit 0
   }
   throw "Docker no esta disponible y no hay build standalone completo. Ejecuta esta carpeta en una maquina con Docker o copia build/api y build/front ya compilados y coloca runtime java/node."
