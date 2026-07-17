@@ -187,6 +187,18 @@ function Invoke-PortablePostgres([string]$ExeName, [string[]]$PgArgs = @(), [boo
   return $LASTEXITCODE
 }
 
+
+function Invoke-PortablePostgresOutput([string]$ExeName, [string[]]$PgArgs) {
+  $exe = Resolve-PortablePostgresExecutable $ExeName
+  $outFile = Join-Path $dataRoot "logs\pg-command.out.tmp"
+  $errFile = Join-Path $dataRoot "logs\pg-command.err.tmp"
+  Remove-Item -Path $outFile, $errFile -Force -ErrorAction SilentlyContinue
+  $proc = Start-Process -FilePath $exe -ArgumentList $PgArgs -WorkingDirectory $portablePostgresBin -RedirectStandardOutput $outFile -RedirectStandardError $errFile -Wait -PassThru -WindowStyle Hidden
+  $output = ""
+  if (Test-Path -Path $outFile) { $output = Get-Content -Path $outFile -Raw -ErrorAction SilentlyContinue }
+  return @{ ExitCode = $proc.ExitCode; Output = $output; }
+}
+
 function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser, [string]$DbPassword) {
   Write-Host "[4/6] Base de datos local Run: iniciando PostgreSQL portable..."
   $pgData = Join-Path $dataRoot "db"
@@ -253,12 +265,13 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
     throw "PostgreSQL portable no quedo listo a tiempo. Revisa data\logs\postgres.err.log y confirma que el puerto $Port no este ocupado."
   }
 
+  [Environment]::SetEnvironmentVariable("PGCONNECT_TIMEOUT", "2", "Process")
   $adminUser = "postgres"
   $adminReady = $false
   $adminCheck = @()
   for ($i = 0; $i -lt 20; $i++) {
-    $adminCheck = & (Resolve-PortablePostgresExecutable "psql.exe") @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1") 2>$null
-    if ($LASTEXITCODE -eq 0 -and (($adminCheck -join "").Trim() -eq "1")) {
+    $adminCheck = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1")
+    if ($adminCheck.ExitCode -eq 0 -and $adminCheck.Output.Trim() -eq "1") {
       $adminReady = $true
       break
     }
@@ -272,8 +285,8 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   $escapedPassword = $DbPassword.Replace("'", "''")
   $roleExistsOutput = $null
   for ($i = 0; $i -lt 20; $i++) {
-    $roleExistsOutput = & (Resolve-PortablePostgresExecutable "psql.exe") @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'") 2>$null
-    if ($LASTEXITCODE -eq 0) { break }
+    $roleExistsResult = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'")
+    if ($roleExistsResult.ExitCode -eq 0) { $roleExistsOutput = $roleExistsResult.Output; break }
     Start-Sleep -Seconds 1
   }
   if (($roleExistsOutput -join "").Trim() -ne "1") {
