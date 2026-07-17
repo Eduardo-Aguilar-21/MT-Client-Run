@@ -513,20 +513,19 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   if ($PostgresPid -gt 0) { $pidState.postgres = $PostgresPid }
   $pidState | ConvertTo-Json | Set-Content -Path $pidFile -Encoding UTF8
 
-  $frontUrl = "http://localhost:$FrontPort"
+  $frontUrl = "http://localhost:$FrontPort/login"
   $ready = $false
   for ($i = 0; $i -lt 60; $i++) {
     try {
-      $resp = Invoke-WebRequest -UseBasicParsing -Uri $frontUrl -Method Head -TimeoutSec 2
+      $resp = Invoke-WebRequest -UseBasicParsing -Uri $frontUrl -Method Get -TimeoutSec 2
       if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 500) { $ready = $true; break }
     } catch {}
     Start-Sleep -Seconds 2
   }
   if (-not $ready) {
-    Write-Host "No pude abrir $frontUrl aun. Revisa logs y procesos de java/node."
-  } else {
-    Start-Process $frontUrl
+    Write-Host "No pude confirmar $frontUrl aun, pero intentare abrirlo igualmente."
   }
+  Start-Process -FilePath "explorer.exe" -ArgumentList $frontUrl
   Write-Host "Modo standalone activo. Ejecutando API y Front con java/node locales."
   Write-Host "Logs API: $apiOutLog | $apiErrLog"
   Write-Host "Logs Front: $frontOutLog | $frontErrLog"
@@ -575,11 +574,11 @@ function Start-Docker([string]$frontPort) {
   Pop-Location
 
   Write-Host "[6/6] Esperando front listo..."
-  $frontUrl = "http://localhost:$frontPort"
+  $frontUrl = "http://localhost:$frontPort/login"
   $ready = $false
   for ($i = 0; $i -lt 60; $i++) {
     try {
-      $response = Invoke-WebRequest -UseBasicParsing -Uri $frontUrl -Method Head -TimeoutSec 2
+      $response = Invoke-WebRequest -UseBasicParsing -Uri $frontUrl -Method Get -TimeoutSec 2
       if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
         $ready = $true
         break
@@ -589,7 +588,7 @@ function Start-Docker([string]$frontPort) {
     }
   }
   if (-not $ready) { throw "No pude abrir $frontUrl. Revisa logs: docker compose logs -f" }
-  Start-Process $frontUrl
+  Start-Process -FilePath "explorer.exe" -ArgumentList $frontUrl
   Write-Host "Listo. Servicio API: http://localhost:8080 | UI: $frontUrl"
   Write-Host "Para detener: docker compose --env-file .env -f $composeFile down"
   Write-Host "Logs: docker compose --env-file .env -f $composeFile logs -f"
