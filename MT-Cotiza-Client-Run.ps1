@@ -271,7 +271,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   $adminCheck = @()
   for ($i = 0; $i -lt 20; $i++) {
     $adminCheck = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1")
-    if ($adminCheck.ExitCode -eq 0 -and $adminCheck.Output.Trim() -eq "1") {
+    if ($adminCheck.ExitCode -eq 0 -and (($adminCheck.Output -join "").Trim()) -eq "1") {
       $adminReady = $true
       break
     }
