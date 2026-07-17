@@ -102,12 +102,14 @@ Variables importantes:
 
 ```text
 MT_ARTIFACT_ONLY=1
+RUN_DB_MODE=portable
 API_PORT=8080
 FRONTEND_PORT=3000
 NEXT_PUBLIC_API_URL=http://localhost:8080/api
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5434/cotiflow
-SPRING_DATASOURCE_USERNAME=cotiflow_user
-SPRING_DATASOURCE_PASSWORD=cotiflow_password
+POSTGRES_DB=cotiflow
+POSTGRES_USER=cotiflow_user
+POSTGRES_PASSWORD=cotiflow_password
+POSTGRES_PORT=5434
 JWT_SECRET_KEY=...
 ```
 
@@ -148,6 +150,28 @@ clean-MT-Cotiza-Client-Run.bat
 ```
 
 Esto conserva `build/`, `runtime/` y `data/uploads/`.
+
+## Backup y restauracion
+
+Para crear un backup de la base local, primero asegúrate de que Run esté iniciado y ejecuta:
+
+```text
+backup-MT-Cotiza-Client-Run.bat
+```
+
+El archivo se guarda en:
+
+```text
+data/backups/cotiflow-AAAAMMDD-HHMMSS.backup
+```
+
+Para restaurar el último backup disponible, detén la aplicación y ejecuta:
+
+```text
+restore-MT-Cotiza-Client-Run.bat
+```
+
+También puedes arrastrar un archivo `.backup` sobre `restore-MT-Cotiza-Client-Run.bat` para restaurar un backup específico.
 
 
 ### Arranque rápido con limpieza integrada
