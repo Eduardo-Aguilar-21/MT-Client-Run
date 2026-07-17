@@ -474,10 +474,10 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   $javaExe = Resolve-Executable "java" $javaCandidatePaths
   $nodeExe = Resolve-Executable "node" $nodeCandidatePaths
   if (-not $javaExe) {
-    throw "No se encontro java para modo sin Docker. Coloca runtime\\java\\bin\\java.exe en MT-Client-Run\\runtime o instala Java."
+    throw "No se encontro Java para modo sin Docker. Ejecuta prepare-MT-Cotiza-Client-Run-Runtime.bat antes de entregar el Run o coloca runtime\java\bin\java.exe."
   }
   if (-not $nodeExe) {
-    throw "No se encontro node para modo sin Docker. Coloca runtime\\node\\node.exe en MT-Client-Run\\runtime o instala Node.js."
+    throw "No se encontro Node para modo sin Docker. Ejecuta prepare-MT-Cotiza-Client-Run-Runtime.bat antes de entregar el Run o coloca runtime\node\node.exe."
   }
 
   $servers = Get-StandaloneServer

@@ -42,8 +42,9 @@ MT-Client-Run/
     uploads/
     logs/
   runtime/
-    java/
-    node/
+    java/       java portable para ejecutar la API
+    node/       node portable para ejecutar el Front
+    postgres/   PostgreSQL portable
 ```
 
 ## Actualizar API
@@ -139,7 +140,14 @@ RUN_DB_MODE=external
 
 Para `external`, ajusta `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` y `SPRING_DATASOURCE_PASSWORD`.
 
-El launcher no compila codigo fuente.
+El launcher no compila codigo fuente. Para dejar el Run portable antes de entregarlo, ejecuta:
+
+```text
+prepare-MT-Cotiza-Client-Run-Runtime.bat
+```
+
+Ese script descarga y coloca Node en `runtime/node` y Java JRE en `runtime/java`. Maven no se incluye porque no se necesita para correr; solo se usa fuera del Run para compilar el JAR.
+
 
 ## Limpieza de prueba
 

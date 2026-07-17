@@ -3,3 +3,5 @@
 *.err.log
 standalone.pids.json
 .env
+
+runtime/_downloads/
