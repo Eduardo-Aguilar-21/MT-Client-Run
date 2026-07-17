@@ -77,6 +77,9 @@ function Import-EnvFile {
     if ($parts.Count -lt 2) { return }
     $key = $parts[0].Trim()
     $value = $parts[1].Trim()
+    if ($key -in @("SPRING_DATASOURCE_URL", "SPRING_DATASOURCE_USERNAME", "SPRING_DATASOURCE_PASSWORD")) {
+      return
+    }
     if (-not [string]::IsNullOrWhiteSpace($key)) {
       [Environment]::SetEnvironmentVariable($key, $value, "Process")
     }
