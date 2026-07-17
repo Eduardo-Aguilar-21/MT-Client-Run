@@ -149,6 +149,29 @@ clean-MT-Cotiza-Client-Run.bat
 
 Esto conserva `build/`, `runtime/` y `data/uploads/`.
 
+
+### Arranque rápido con limpieza integrada
+
+Para evitar teclear manualmente los comandos de limpieza, usa:
+
+```text
+start-MT-Cotiza-Client-Run-Fast.bat --clean
+```
+
+Esto ejecuta:
+
+- Detiene procesos `java`, `node` y `postgres`.
+- Borra `data\\db` y `data\\logs`.
+- Arranca el launcher en modo silencioso.
+
+Opciones:
+
+```text
+start-MT-Cotiza-Client-Run-Fast.bat --clean      Limpieza + arranque
+start-MT-Cotiza-Client-Run-Fast.bat --noclean    Arranque directo
+start-MT-Cotiza-Client-Run-Fast.bat              Arranque con confirmación
+```
+
 ## Logs
 
 El arranque silencioso escribe el log principal en:
