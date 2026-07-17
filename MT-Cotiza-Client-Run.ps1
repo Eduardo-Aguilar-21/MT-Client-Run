@@ -102,7 +102,7 @@ function Resolve-DatabaseCredentials([string]$RunDbMode, [string]$DbPort, [strin
 
   if ($mode -ne "external") {
     if ($mode -eq "portable" -or $mode -eq "docker") {
-      Write-Host "   - Ejecutando en modo $mode: usando credenciales administradas por Run (POSTGRES_*)."
+      Write-Host "   - Ejecutando en modo ${mode}: usando credenciales administradas por Run (POSTGRES_*)."
       return @{ Url = $resultUrl; User = $resultUser; Password = $resultPassword; }
     }
     throw "RUN_DB_MODE invalido: $RunDbMode. Usa portable, docker o external."
