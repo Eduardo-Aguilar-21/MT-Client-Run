@@ -45,9 +45,35 @@ function New-TreeClean([string]$Path) {
 }
 
 function Ensure-EnvFile {
-  if (Test-Path -Path $envFile) { return }
   if (-not (Test-Path -Path $envExampleFile)) {
     throw "No existe .env ni .env.example en $runRoot. Crea .env antes de iniciar."
+  }
+  if (Test-Path -Path $envFile) {
+    $existingKeys = @{}
+    Get-Content -Path $envFile | ForEach-Object {
+      $line = $_.Trim()
+      if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith("#")) { return }
+      $parts = $line -split "=", 2
+      if ($parts.Count -ge 2) { $existingKeys[$parts[0].Trim()] = $true }
+    }
+
+    $missingLines = @()
+    Get-Content -Path $envExampleFile | ForEach-Object {
+      $line = $_.Trim()
+      if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith("#")) { return }
+      $parts = $line -split "=", 2
+      if ($parts.Count -ge 2 -and -not $existingKeys.ContainsKey($parts[0].Trim())) {
+        $missingLines += $_
+      }
+    }
+
+    if ($missingLines.Count -gt 0) {
+      Add-Content -Path $envFile -Value ""
+      Add-Content -Path $envFile -Value "# Valores agregados automaticamente desde .env.example"
+      Add-Content -Path $envFile -Value $missingLines
+      Write-Host "Se actualizaron variables faltantes en .env desde .env.example."
+    }
+    return
   }
   Copy-Item -Path $envExampleFile -Destination $envFile -Force
   Write-Host "Se creo .env desde .env.example. Revisa credenciales y secrets antes de produccion."
