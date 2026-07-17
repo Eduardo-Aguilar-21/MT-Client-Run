@@ -203,14 +203,28 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   }
 
   $adminUser = "postgres"
-  $adminCheck = & (Resolve-PortablePostgresExecutable "psql.exe") @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1") 2>$null
-  if (($adminCheck -join "").Trim() -ne "1") {
-    $adminUser = $DbUser
+  $adminReady = $false
+  $adminCheck = @()
+  for ($i = 0; $i -lt 20; $i++) {
+    $adminCheck = & (Resolve-PortablePostgresExecutable "psql.exe") @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1") 2>$null
+    if ($LASTEXITCODE -eq 0 -and (($adminCheck -join "").Trim() -eq "1")) {
+      $adminReady = $true
+      break
+    }
+    Start-Sleep -Seconds 1
+  }
+  if (-not $adminReady) {
+    throw "PostgreSQL iniciado pero no responde con usuario postgres para inicializar rol base. Revisa data\logs\postgres.err.log."
   }
 
   $escapedUser = $DbUser.Replace("'", "''")
   $escapedPassword = $DbPassword.Replace("'", "''")
-  $roleExistsOutput = & (Resolve-PortablePostgresExecutable "psql.exe") @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'") 2>$null
+  $roleExistsOutput = $null
+  for ($i = 0; $i -lt 20; $i++) {
+    $roleExistsOutput = & (Resolve-PortablePostgresExecutable "psql.exe") @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'") 2>$null
+    if ($LASTEXITCODE -eq 0) { break }
+    Start-Sleep -Seconds 1
+  }
   if (($roleExistsOutput -join "").Trim() -ne "1") {
     Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-c", "CREATE ROLE `"$escapedUser`" LOGIN PASSWORD '$escapedPassword'") | Out-Null
   }
