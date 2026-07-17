@@ -158,9 +158,21 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   $postgresProc = Start-Process -FilePath $postgresExe -ArgumentList $postgresArgs -WorkingDirectory $portablePostgresBin -RedirectStandardOutput $pgOutLog -RedirectStandardError $pgErrLog -PassThru -WindowStyle Hidden
   Write-Host "   - PostgreSQL iniciado (PID $($postgresProc.Id))"
 
-  Start-Sleep -Seconds 1
-  $postgresProc.Refresh()
-  if ($postgresProc.HasExited) {
+  $isReady = $false
+  for ($i = 0; $i -lt 40; $i++) {
+    & (Resolve-PortablePostgresExecutable "pg_isready.exe") @("-h", "127.0.0.1", "-p", $Port) >$null 2>$null
+    if ($LASTEXITCODE -eq 0) {
+      $isReady = $true
+      break
+    }
+    $postgresProc.Refresh()
+    if ($postgresProc.HasExited) {
+      break
+    }
+    Start-Sleep -Seconds 1
+  }
+
+  if (-not $isReady) {
     $postgresErr = ""
     if (Test-Path -Path $pgErrLog) { $postgresErr = Get-Content -Path $pgErrLog -Raw -ErrorAction SilentlyContinue }
     if ($postgresErr -like "*privilegios administrativos*") {
@@ -168,33 +180,22 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
       $cmdFile = Join-Path $dataRoot "run-postgres.cmd"
       $cmd = "cd /d ""$portablePostgresBin"" && ""$postgresExe"" -D ""$pgData"" -p $Port -h 127.0.0.1 >> ""$pgOutLog"" 2>> ""$pgErrLog"""
       Set-Content -Path $cmdFile -Value $cmd -Encoding ASCII
-      $runasCommand = "cmd.exe /c `"$cmdFile`""
+      $runasCommand = "cmd.exe /c ""$cmdFile"""
       Write-Host "   - Ejecutando: runas /trustlevel:0x20000 $runasCommand"
-      Start-Process -FilePath "runas.exe" -ArgumentList @("/trustlevel:0x20000", "`"$runasCommand`"") -WorkingDirectory $runRoot -WindowStyle Hidden | Out-Null
-      $postgresProc = $null
-      Write-Host "   - Esperando PostgreSQL iniciado con token restringido..."
-      Start-Sleep -Seconds 2
-    } else {
-      throw "PostgreSQL portable se detuvo antes de quedar listo (codigo $($postgresProc.ExitCode)). Revisa data\logs\postgres.err.log."
+      Start-Process -FilePath "runas.exe" -ArgumentList @("/trustlevel:0x20000", """$runasCommand""") -WorkingDirectory $runRoot -WindowStyle Hidden | Out-Null
+      $isReady = $false
+      for ($i = 0; $i -lt 80; $i++) {
+        & (Resolve-PortablePostgresExecutable "pg_isready.exe") @("-h", "127.0.0.1", "-p", $Port) >$null 2>$null
+        if ($LASTEXITCODE -eq 0) {
+          $isReady = $true
+          break
+        }
+        Start-Sleep -Seconds 2
+      }
     }
   }
 
-  $ready = $false
-  for ($i = 0; $i -lt 60; $i++) {
-    if ($postgresProc -ne $null) {
-      $postgresProc.Refresh()
-      if ($postgresProc.HasExited) {
-        throw "PostgreSQL portable se detuvo antes de quedar listo (codigo $($postgresProc.ExitCode)). Revisa data\logs\postgres.err.log."
-      }
-    }
-    $readyCode = Invoke-PortablePostgres -ExeName "pg_isready.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port) -IgnoreFailure $true -Quiet $true
-    if ($readyCode -eq 0) {
-      $ready = $true
-      break
-    }
-    Start-Sleep -Seconds 2
-  }
-  if (-not $ready) {
+  if (-not $isReady) {
     throw "PostgreSQL portable no quedo listo a tiempo. Revisa data\logs\postgres.err.log y confirma que el puerto $Port no este ocupado."
   }
 
