@@ -103,6 +103,22 @@ function Ensure-EnvFile {
       Set-Content -Path $envFile -Value $updatedEnvContent -Encoding UTF8
       Write-Host "Se migro POSTGRES_PORT de 5434 a 15434 para evitar conflictos con PostgreSQL instalado."
     }
+
+    $envContent = Get-Content -Path $envFile
+    $updatedEnvContent = @()
+    $migratedPassword = $false
+    foreach ($line in $envContent) {
+      if ($line -match '^\s*POSTGRES_PASSWORD\s*=\s*changeme\s*$') {
+        $updatedEnvContent += "POSTGRES_PASSWORD=cotiflow_password"
+        $migratedPassword = $true
+      } else {
+        $updatedEnvContent += $line
+      }
+    }
+    if ($migratedPassword) {
+      Set-Content -Path $envFile -Value $updatedEnvContent -Encoding UTF8
+      Write-Host "Se migro POSTGRES_PASSWORD al valor administrado por MT Cotiza."
+    }
     return
   }
   Copy-Item -Path $envExampleFile -Destination $envFile -Force

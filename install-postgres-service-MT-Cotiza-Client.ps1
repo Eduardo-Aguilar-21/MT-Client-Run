@@ -54,8 +54,11 @@ if (-not $ready) { throw "Servicio PostgreSQL $serviceName no quedo listo" }
 
 $roleExists = (& $psql -h 127.0.0.1 -p $port -U postgres -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname = '$dbUser'") -join ""
 if ($roleExists.Trim() -ne "1") {
-  & $psql -h 127.0.0.1 -p $port -U postgres -d postgres -c "CREATE ROLE \"$dbUser\" LOGIN PASSWORD '$dbPassword'" | Out-Null
+  & $psql -h 127.0.0.1 -p $port -U postgres -d postgres -c "CREATE ROLE `"$dbUser`" LOGIN PASSWORD '$dbPassword'" | Out-Null
+} else {
+  & $psql -h 127.0.0.1 -p $port -U postgres -d postgres -c "ALTER ROLE `"$dbUser`" WITH PASSWORD '$dbPassword'" | Out-Null
 }
 & $createdb -h 127.0.0.1 -p $port -U postgres -O $dbUser $dbName 2>$null
+
 
 Write-Host "Servicio PostgreSQL listo: $serviceName en 127.0.0.1:$port"
