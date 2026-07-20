@@ -91,6 +91,17 @@ function startServices() {
   });
 }
 
+function getLastRunLogLine() {
+  if (!fs.existsSync(runLog)) return 'Preparando arranque...';
+  const content = fs.readFileSync(runLog, 'utf8');
+  const lines = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !line.startsWith('at ') && !line.includes('CategoryInfo') && !line.includes('FullyQualifiedErrorId'));
+  return lines.length ? lines[lines.length - 1].slice(0, 180) : 'Preparando arranque...';
+}
+
 function getLogoDataUri() {
   const logoPath = path.join(__dirname, 'assets', 'run-logo.png');
   if (!fs.existsSync(logoPath)) return '';
@@ -111,7 +122,8 @@ function createWindow() {
     backgroundColor: '#f5f1e8',
     webPreferences: {
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      preload: path.join(__dirname, 'preload.js')
     }
   });
 
@@ -128,8 +140,15 @@ function createWindow() {
           ${logoDataUri ? `<img src="${logoDataUri}" alt="MT Cotiza" style="display:block;width:480px;max-width:86vw;height:auto;margin:0 auto 30px;object-fit:contain" />` : ""}
           <div style="width:54px;height:54px;border:5px solid #e5e7eb;border-top-color:#1f2937;border-radius:50%;margin:0 auto 22px;animation:spin .85s linear infinite"></div>
           <p style="margin:0;font-size:15px">Iniciando servicios locales...</p>
+          <p id="status" style="margin:12px auto 0;max-width:720px;font-size:12px;line-height:1.45;color:#6b7280">Preparando arranque...</p>
           <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-          <p style="margin-top:16px;font-size:12px;color:#6b7280">Logs: %LOCALAPPDATA%\\MT Cotiza Client\\data\\logs\\electron-run.log</p>
+          <p style="margin-top:16px;font-size:12px;color:#9ca3af">Logs: %LOCALAPPDATA%\\MT Cotiza Client\\data\\logs\\electron-run.log</p>
+          <script>
+            window.mtCotizaLauncher.onStatus((message) => {
+              const el = document.getElementById('status');
+              if (el) el.textContent = message;
+            });
+          </script>
         </main>
       </body>
     </html>
@@ -140,6 +159,11 @@ app.whenReady().then(async () => {
   await session.defaultSession.clearStorageData().catch(() => {});
   await session.defaultSession.clearCache().catch(() => {});
   createWindow();
+  const statusTimer = setInterval(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('launcher-status', getLastRunLogLine());
+    }
+  }, 1000);
   const frontPort = readEnvValue('FRONTEND_PORT', '3000');
   const configuredHost = readEnvValue("FRONTEND_HOST", "127.0.0.1");
   const appHost = configuredHost === 'localhost' ? '127.0.0.1' : configuredHost;
@@ -150,8 +174,10 @@ app.whenReady().then(async () => {
     const readyNow = await waitForAnyUrl(loginUrls, 2000).catch(() => null);
     if (!readyNow) startServices();
     const readyUrl = readyNow || await waitForAnyUrl(loginUrls, 0);
+    clearInterval(statusTimer);
     await mainWindow.loadURL(readyUrl);
   } catch (err) {
+    clearInterval(statusTimer);
     await mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`
       <html><body style="font-family:Segoe UI,Arial,sans-serif;padding:32px">
         <h1>No se pudo iniciar MT Cotiza Client</h1>
