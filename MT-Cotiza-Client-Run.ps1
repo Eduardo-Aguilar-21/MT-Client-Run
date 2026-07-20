@@ -100,7 +100,7 @@ function Get-EnvValue([string]$Key, [string]$Default = "") {
 
 function Resolve-DatabaseCredentials([string]$RunDbMode, [string]$DbPort, [string]$DbName, [string]$DefaultDbUser, [string]$DefaultDbPassword) {
   $mode = if ([string]::IsNullOrWhiteSpace($RunDbMode)) { "external" } else { $RunDbMode.ToLowerInvariant().Trim() }
-  $resultUrl = "jdbc:postgresql://127.0.0.1:$DbPort/$DbName?sslmode=disable"
+  $resultUrl = "jdbc:postgresql://127.0.0.1:$DbPort/${DbName}?sslmode=disable"
   $resultUser = Get-EnvValue "POSTGRES_USER" $DefaultDbUser
   $resultPassword = Get-EnvValue "POSTGRES_PASSWORD" $DefaultDbPassword
 
