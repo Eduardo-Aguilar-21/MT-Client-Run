@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, shell, session } = require('electron');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -7,8 +7,11 @@ const http = require('http');
 const runRoot = path.resolve(__dirname, '..');
 const logsDir = path.join(runRoot, 'data', 'logs');
 const runLog = path.join(logsDir, 'electron-run.log');
+const electronProfileDir = path.join(runRoot, 'data', 'electron-profile');
 let runner = null;
 let mainWindow = null;
+
+app.setPath('userData', electronProfileDir);
 
 function readEnvValue(key, fallback) {
   const envFile = path.join(runRoot, '.env');
@@ -118,6 +121,8 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  await session.defaultSession.clearStorageData().catch(() => {});
+  await session.defaultSession.clearCache().catch(() => {});
   createWindow();
   const frontPort = readEnvValue('FRONTEND_PORT', '3000');
   const appHost = readEnvValue("FRONTEND_HOST", "localhost");
