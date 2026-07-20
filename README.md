@@ -110,7 +110,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080/api
 POSTGRES_DB=cotiflow
 POSTGRES_USER=cotiflow_user
 POSTGRES_PASSWORD=cotiflow_password
-POSTGRES_PORT=5434
+POSTGRES_PORT=15434
 JWT_SECRET_KEY=...
 ```
 

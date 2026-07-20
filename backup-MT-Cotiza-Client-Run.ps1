@@ -27,7 +27,7 @@ if (-not (Test-Path -Path $pgDump)) {
 New-Item -ItemType Directory -Path $backupDir -Force | Out-Null
 
 $dbHost = "127.0.0.1"
-$dbPort = Get-EnvValue "POSTGRES_PORT" "5434"
+$dbPort = Get-EnvValue "POSTGRES_PORT" "15434"
 $dbName = Get-EnvValue "POSTGRES_DB" "cotiflow"
 $dbUser = Get-EnvValue "POSTGRES_USER" "cotiflow_user"
 $dbPassword = Get-EnvValue "POSTGRES_PASSWORD" "cotiflow_password"

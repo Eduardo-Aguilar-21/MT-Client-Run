@@ -183,31 +183,6 @@ function Resolve-PortablePostgresExecutable([string]$Name) {
   throw "No se encontro PostgreSQL portable: $exe. Coloca PostgreSQL para Windows en runtime\postgres\bin."
 }
 
-function Stop-ConflictingPostgresPort([string]$Port) {
-  $connections = @()
-  try {
-    $connections = Get-NetTCPConnection -LocalPort ([int]$Port) -State Listen -ErrorAction SilentlyContinue
-  } catch {
-    return
-  }
-  foreach ($conn in $connections) {
-    $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue
-    if (-not $proc) { continue }
-    $procPath = ""
-    try { $procPath = $proc.Path } catch {}
-    $currentPostgresRoot = Join-Path $portablePostgresBin "*"
-    $isCurrentPostgres = $proc.ProcessName -eq "postgres" -and $procPath -like $currentPostgresRoot
-    if ($isCurrentPostgres) { continue }
-    if ($proc.ProcessName -eq "postgres") {
-      Write-Host "   - Cerrando PostgreSQL previo en puerto $Port: PID $($proc.Id) $procPath"
-      Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
-      Start-Sleep -Seconds 2
-      continue
-    }
-    throw "El puerto PostgreSQL $Port esta ocupado por $($proc.ProcessName) PID $($proc.Id). Cierra ese proceso o cambia POSTGRES_PORT en .env."
-  }
-}
-
 function Invoke-PortablePostgres([string]$ExeName, [string[]]$PgArgs = @(), [bool]$IgnoreFailure = $false, [bool]$Quiet = $false) {
   $exe = Resolve-PortablePostgresExecutable $ExeName
   $argsText = $PgArgs -join " "
@@ -269,7 +244,6 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   Resolve-PortablePostgresExecutable "createdb.exe" | Out-Null
   Resolve-PortablePostgresExecutable "psql.exe" | Out-Null
 
-  Stop-ConflictingPostgresPort -Port $Port
 
   if (-not (Test-Path -Path (Join-Path $pgData "PG_VERSION"))) {
     Write-Host "   - Inicializando data/db..."
@@ -751,7 +725,7 @@ $apiProfile = Get-EnvValue "API_PROFILE" "prod"
 $apiPort = Get-EnvValue "API_PORT" "8080"
 $artifactOnly = To-Bool (Get-EnvValue "MT_ARTIFACT_ONLY" "1") $true
 $runDbMode = (Get-EnvValue "RUN_DB_MODE" "portable").Trim().ToLowerInvariant()
-$dbPort = Get-EnvValue "POSTGRES_PORT" "5434"
+$dbPort = Get-EnvValue "POSTGRES_PORT" "15434"
 $dbName = Get-EnvValue "POSTGRES_DB" "cotiflow"
 $dbUser = Get-EnvValue "POSTGRES_USER" "cotiflow_user"
 $dbPassword = Get-EnvValue "POSTGRES_PASSWORD" "cotiflow_password"
