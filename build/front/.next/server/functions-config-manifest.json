@@ -1,6 +1,7 @@
 {
   "version": 1,
   "functions": {
+    "/api/server-sync/tasks/by-sales-reference": {},
     "/api/quotations/[id]/download": {}
   }
 }

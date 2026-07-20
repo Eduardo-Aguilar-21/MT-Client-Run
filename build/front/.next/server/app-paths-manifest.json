@@ -52,6 +52,7 @@
   "/_global-error/page": "app/_global-error/page.js",
   "/_not-found/page": "app/_not-found/page.js",
   "/api/quotations/[id]/download/route": "app/api/quotations/[id]/download/route.js",
+  "/api/server-sync/tasks/by-sales-reference/route": "app/api/server-sync/tasks/by-sales-reference/route.js",
   "/app/page": "app/app/page.js",
   "/app/settings/page": "app/app/settings/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",

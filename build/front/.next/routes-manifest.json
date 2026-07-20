@@ -233,6 +233,12 @@
       "namedRegex": "^/_not\\-found(?:/)?$"
     },
     {
+      "page": "/api/server-sync/tasks/by-sales-reference",
+      "regex": "^/api/server\\-sync/tasks/by\\-sales\\-reference(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/server\\-sync/tasks/by\\-sales\\-reference(?:/)?$"
+    },
+    {
       "page": "/app",
       "regex": "^/app(?:/)?$",
       "routeKeys": {},

@@ -52,6 +52,7 @@
   "/_global-error/page": "/_global-error",
   "/_not-found/page": "/_not-found",
   "/api/quotations/[id]/download/route": "/api/quotations/[id]/download",
+  "/api/server-sync/tasks/by-sales-reference/route": "/api/server-sync/tasks/by-sales-reference",
   "/app/page": "/app",
   "/app/settings/page": "/app/settings",
   "/favicon.ico/route": "/favicon.ico",
