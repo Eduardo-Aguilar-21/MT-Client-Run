@@ -29,32 +29,37 @@ function readEnvValue(key, fallback) {
   return fallback;
 }
 
-function waitForUrl(url, timeoutMs = 90000) {
+function waitForAnyUrl(urls, timeoutMs = 0) {
   const started = Date.now();
   let lastError = '';
   return new Promise((resolve, reject) => {
     const tick = () => {
-      const req = http.get(url, (res) => {
-        res.resume();
-        if (res.statusCode >= 200 && res.statusCode < 500) resolve(true);
-        else {
-          lastError = `HTTP ${res.statusCode}`;
-          retry();
+      let pending = urls.length;
+      const retry = (message) => {
+        if (message) lastError = message;
+        pending -= 1;
+        if (pending > 0) return;
+        if (timeoutMs > 0 && Date.now() - started > timeoutMs) {
+          reject(new Error(`No respondio ${urls.join(' ni ')}${lastError ? ` (${lastError})` : ''}`));
+          return;
         }
-      });
-      req.setTimeout(1500, () => {
-        lastError = 'timeout';
-        req.destroy();
-        retry();
-      });
-      req.on('error', (err) => {
-        lastError = err && err.message ? err.message : 'connection error';
-        retry();
-      });
-    };
-    const retry = () => {
-      if (Date.now() - started > timeoutMs) reject(new Error(`No respondio ${url}${lastError ? ` (${lastError})` : ''}`));
-      else setTimeout(tick, 1000);
+        setTimeout(tick, 1000);
+      };
+
+      for (const url of urls) {
+        const req = http.get(url, (res) => {
+          res.resume();
+          if (res.statusCode >= 200 && res.statusCode < 500) resolve(url);
+          else retry(`HTTP ${res.statusCode}`);
+        });
+        req.setTimeout(1500, () => {
+          req.destroy();
+          retry('timeout');
+        });
+        req.on('error', (err) => {
+          retry(err && err.message ? err.message : 'connection error');
+        });
+      }
     };
     tick();
   });
@@ -137,12 +142,12 @@ app.whenReady().then(async () => {
   const appHost = configuredHost === 'localhost' ? '127.0.0.1' : configuredHost;
   const loginUrl = `http://${appHost}:${frontPort}/login`;
   const fallbackLoginUrl = appHost === '127.0.0.1' ? `http://localhost:${frontPort}/login` : `http://127.0.0.1:${frontPort}/login`;
+  const loginUrls = [loginUrl, fallbackLoginUrl];
   try {
-    await waitForUrl(loginUrl, 2000).catch(() => {
-      startServices();
-      return waitForUrl(loginUrl, 180000).catch(() => waitForUrl(fallbackLoginUrl, 30000));
-    });
-    await mainWindow.loadURL(loginUrl).catch(() => mainWindow.loadURL(fallbackLoginUrl));
+    const readyNow = await waitForAnyUrl(loginUrls, 2000).catch(() => null);
+    if (!readyNow) startServices();
+    const readyUrl = readyNow || await waitForAnyUrl(loginUrls, 0);
+    await mainWindow.loadURL(readyUrl);
   } catch (err) {
     await mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`
       <html><body style="font-family:Segoe UI,Arial,sans-serif;padding:32px">
@@ -153,6 +158,7 @@ app.whenReady().then(async () => {
     `));
   }
 });
+
 
 app.on('window-all-closed', () => {
   app.quit();
