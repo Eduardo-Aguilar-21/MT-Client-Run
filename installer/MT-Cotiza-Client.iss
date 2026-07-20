@@ -19,7 +19,6 @@ OutputBaseFilename=MT-Cotiza-Client-Setup-{#MyAppVersion}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-SetupIconFile=..\electron\dist\electron.exe
 UninstallDisplayIcon={app}\electron\dist\electron.exe
 CloseApplications=yes
 RestartApplications=no
