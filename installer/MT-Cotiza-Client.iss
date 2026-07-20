@@ -34,6 +34,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\electron\dist\electron.exe"
 Name: "desktopicon"; Description: "Crear acceso directo en el escritorio"; GroupDescription: "Accesos directos:"; Flags: checkedonce
 
 [Run]
+Filename: "{app}\install-bootstrap-MT-Cotiza-Client.bat"; WorkingDir: "{app}"; StatusMsg: "Preparando base de datos local por primera vez..."; Flags: runhidden waituntilterminated
 Filename: "{app}\electron\dist\electron.exe"; Parameters: """{app}\electron"""; WorkingDir: "{app}"; Description: "Abrir {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]

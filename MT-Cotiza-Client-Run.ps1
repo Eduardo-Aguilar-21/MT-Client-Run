@@ -1,5 +1,6 @@
 param(
-  [switch]$NoBrowser
+  [switch]$NoBrowser,
+  [switch]$BootstrapOnly
 )
 
 Set-StrictMode -Version Latest
@@ -637,6 +638,20 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   }
   if (-not $ready) {
     Write-Host "No pude confirmar $frontUrl aun, pero intentare abrirlo igualmente."
+  }
+  if ($BootstrapOnly) {
+    Write-Host "Bootstrap completo: API y Front respondieron. Cerrando servicios temporales..."
+    Stop-Process -Id $frontProc.Id -Force -ErrorAction SilentlyContinue
+    Stop-Process -Id $apiProc.Id -Force -ErrorAction SilentlyContinue
+    $pgData = Join-Path $dataRoot "db"
+    $pgCtl = Join-Path $portablePostgresBin "pg_ctl.exe"
+    if (Test-Path -Path $pgCtl) {
+      & $pgCtl @("-D", $pgData, "stop", "-m", "fast") >$null 2>$null
+    } elseif ($PostgresPid -gt 0) {
+      Stop-Process -Id $PostgresPid -Force -ErrorAction SilentlyContinue
+    }
+    if (Test-Path -Path $pidFile) { Remove-Item -Path $pidFile -Force -ErrorAction SilentlyContinue }
+    return
   }
   if (-not $NoBrowser) {
     Start-Process -FilePath "explorer.exe" -ArgumentList $frontUrl
