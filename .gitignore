@@ -6,3 +6,14 @@ standalone.pids.json
 
 runtime/_downloads/
 electron/dist/
+
+# Local user/runtime state. Never commit client data.
+data/
+backups/
+uploads/
+files/
+attachments/
+build/api/logs/
+build/api/*.log
+build/api/*.out.log
+build/api/*.err.log

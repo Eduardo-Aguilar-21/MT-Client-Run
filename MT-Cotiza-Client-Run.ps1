@@ -494,6 +494,7 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
 
   Import-EnvFile
   $uploadDir = Join-Path $dataRoot "uploads"
+  Ensure-Folder $uploadDir
   $apiAppLog = Join-Path $dataRoot "logs\cotiflow.log"
   $envSet = @{
     "SPRING_PROFILES_ACTIVE" = $ApiProfile
@@ -520,6 +521,8 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
     "-Dspring.datasource.url=$DbUrl"
     "-Dspring.datasource.username=$DbUser"
     "-Dspring.datasource.password=$DbPassword"
+    "-Dapp.upload.dir=$uploadDir"
+    "-Dlogging.file.name=$apiAppLog"
     "-Dspring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect"
     "-Dspring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect"
     "-Dspring.datasource.hikari.initialization-fail-timeout=60000"
