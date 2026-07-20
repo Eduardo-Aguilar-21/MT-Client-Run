@@ -17,7 +17,7 @@ $frontDir = Join-Path $repoRoot "MT-Cotiza-Client-Front"
 $buildRoot = Join-Path $runRoot "build"
 $dataRoot = $env:MT_COTIZA_DATA_ROOT
 if ([string]::IsNullOrWhiteSpace($dataRoot)) {
-  $dataRoot = Join-Path $env:LOCALAPPDATA "MT Cotiza Client\data"
+  $dataRoot = Join-Path $env:ProgramData "MT Cotiza Client\data"
 }
 $apiBuild = Join-Path $buildRoot "api"
 $frontBuild = Join-Path $buildRoot "front"
@@ -255,10 +255,26 @@ function Wait-PortableAppDatabase([string]$Port, [string]$DbName, [string]$DbUse
 
 function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser, [string]$DbPassword) {
   Write-Host "[4/6] Base de datos local Run: iniciando PostgreSQL portable..."
-  if (Test-IsProcessElevated) {
-    throw "MT Cotiza Client no debe ejecutarse como administrador. Cierra esta ventana y abre la app con doble click normal; PostgreSQL portable no permite iniciar con privilegios elevados."
-  }
   $pgData = Join-Path $dataRoot "db"
+  $serviceName = "MTCotizaPostgres"
+  $service = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
+  if ($service) {
+    Write-Host "   - Usando servicio PostgreSQL instalado: $serviceName"
+    if ($service.Status -ne "Running") { Start-Service -Name $serviceName }
+    $serviceReady = $false
+    for ($i = 0; $i -lt 60; $i++) {
+      & (Resolve-PortablePostgresExecutable "pg_isready.exe") @("-h", "127.0.0.1", "-p", $Port) >$null 2>$null
+      if ($LASTEXITCODE -eq 0) { $serviceReady = $true; break }
+      Start-Sleep -Seconds 1
+    }
+    if (-not $serviceReady) { throw "El servicio $serviceName no respondio en 127.0.0.1:$Port." }
+    Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser
+    Write-Host "   - PostgreSQL servicio listo en 127.0.0.1:$Port, datos en $pgData."
+    return 0
+  }
+  if (Test-IsProcessElevated) {
+    throw "MT Cotiza Client esta elevado y PostgreSQL aun no esta instalado como servicio. Ejecuta el instalador completo o abre la app sin privilegios elevados."
+  }
   $pgOutLog = Join-Path $dataRoot "logs\postgres.out.log"
   $pgErrLog = Join-Path $dataRoot "logs\postgres.err.log"
   Ensure-Folder $pgData

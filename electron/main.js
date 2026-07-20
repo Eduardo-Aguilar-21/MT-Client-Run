@@ -5,7 +5,7 @@ const path = require('path');
 const http = require('http');
 
 const runRoot = path.resolve(__dirname, '..');
-const defaultDataRoot = path.join(process.env.LOCALAPPDATA || runRoot, 'MT Cotiza Client', 'data');
+const defaultDataRoot = path.join(process.env.ProgramData || runRoot, 'MT Cotiza Client', 'data');
 const dataRoot = process.env.MT_COTIZA_DATA_ROOT || defaultDataRoot;
 process.env.MT_COTIZA_DATA_ROOT = dataRoot;
 const logsDir = path.join(dataRoot, 'logs');
@@ -189,7 +189,7 @@ app.whenReady().then(async () => {
       <html><body style="font-family:Segoe UI,Arial,sans-serif;padding:32px">
         <h1>No se pudo iniciar MT Cotiza Client</h1>
         <p>${String(err.message || err)}</p>
-        <p>Revisa <code>%LOCALAPPDATA%\\MT Cotiza Client\\data\\logs\\electron-run.log</code>.</p>
+        <p>Revisa <code>%ProgramData%\\MT Cotiza Client\\data\\logs\\electron-run.log</code>.</p>
       </body></html>
     `));
   }
