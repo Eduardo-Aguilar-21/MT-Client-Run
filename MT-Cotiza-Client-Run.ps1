@@ -192,15 +192,39 @@ function Invoke-PortablePostgres([string]$ExeName, [string[]]$PgArgs = @(), [boo
 }
 
 
-function Invoke-PortablePostgresOutput([string]$ExeName, [string[]]$PgArgs) {
+function Invoke-PortablePostgresOutput([string]$ExeName, [string[]]$PgArgs, [int]$TimeoutSeconds = 8) {
   $exe = Resolve-PortablePostgresExecutable $ExeName
   $outFile = Join-Path $dataRoot "logs\pg-command.out.tmp"
   $errFile = Join-Path $dataRoot "logs\pg-command.err.tmp"
   Remove-Item -Path $outFile, $errFile -Force -ErrorAction SilentlyContinue
-  $proc = Start-Process -FilePath $exe -ArgumentList $PgArgs -WorkingDirectory $portablePostgresBin -RedirectStandardOutput $outFile -RedirectStandardError $errFile -Wait -PassThru -WindowStyle Hidden
+  $proc = Start-Process -FilePath $exe -ArgumentList $PgArgs -WorkingDirectory $portablePostgresBin -RedirectStandardOutput $outFile -RedirectStandardError $errFile -PassThru -WindowStyle Hidden
+  if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) {
+    Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+    return @{ ExitCode = 124; Output = ""; Error = "timeout"; }
+  }
   $output = ""
+  $errorOutput = ""
   if (Test-Path -Path $outFile) { $output = Get-Content -Path $outFile -Raw -ErrorAction SilentlyContinue }
-  return @{ ExitCode = $proc.ExitCode; Output = $output; }
+  if (Test-Path -Path $errFile) { $errorOutput = Get-Content -Path $errFile -Raw -ErrorAction SilentlyContinue }
+  return @{ ExitCode = $proc.ExitCode; Output = $output; Error = $errorOutput; }
+}
+
+function Wait-PortableAppDatabase([string]$Port, [string]$DbName, [string]$DbUser, [int]$TimeoutSeconds = 120) {
+  Write-Host "   - Verificando conexion de aplicacion a PostgreSQL..."
+  [Environment]::SetEnvironmentVariable("PGCONNECT_TIMEOUT", "3", "Process")
+  [Environment]::SetEnvironmentVariable("PGSSLMODE", "disable", "Process")
+  $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+  while ((Get-Date) -lt $deadline) {
+    $check = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, "-d", $DbName, "-tAc", "SELECT 1") -TimeoutSeconds 5
+    $checkOutput = ""
+    if ($null -ne $check.Output) { $checkOutput = $check.Output.Trim() }
+    if ($check.ExitCode -eq 0 -and $checkOutput -eq "1") {
+      Write-Host "   - DB de aplicacion lista para $DbUser@$DbName."
+      return
+    }
+    Start-Sleep -Seconds 2
+  }
+  throw "PostgreSQL esta iniciado, pero la app no puede conectar como $DbUser a $DbName. Revisa data\logs\postgres.err.log y data\logs\pg-command.err.tmp."
 }
 
 function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser, [string]$DbPassword) {
@@ -225,6 +249,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   & (Resolve-PortablePostgresExecutable "pg_isready.exe") @("-h", "127.0.0.1", "-p", $Port) >$null 2>$null
   if ($LASTEXITCODE -eq 0) {
     Write-Host "   - PostgreSQL portable ya estaba listo en 127.0.0.1:$Port."
+    Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser
     return 0
   }
 
@@ -303,6 +328,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   } else {
     Write-Host "   - PostgreSQL esta aceptando conexiones, pero no se pudo usar postgres para bootstrap. Continuando con DB existente."
   }
+  Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser
   Write-Host "   - PostgreSQL portable listo en 127.0.0.1:$Port, datos en data\db."
   if ($postgresProc -ne $null) { return $postgresProc.Id }
   return 0
@@ -527,11 +553,47 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
     "-Dspring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect"
     "-Dspring.datasource.hikari.initialization-fail-timeout=60000"
     "-Dspring.datasource.hikari.connection-timeout=30000"
+    "-Dspring.datasource.hikari.validation-timeout=5000"
+    "-Dserver-sync.secret="
+    "-Dserver-sync.users-url="
+    "-Dserver-sync.user-update-url="
+    "-Dserver-sync.tasks-url="
+    "-Dserver-sync.tasks-page-url="
+    "-Dserver-sync.quotation-requests-url="
+    "-Dserver-sync.technical-reports-url="
     "-jar",
     $servers.ApiJar
   )
   $apiProc = Start-Process -FilePath $javaExe -ArgumentList $apiArgs -WorkingDirectory $apiBuild -RedirectStandardOutput $apiOutLog -RedirectStandardError $apiErrLog -PassThru -WindowStyle Minimized
   Write-Host "   - API iniciada (PID $($apiProc.Id))"
+
+  $apiReadyUrl = "http://127.0.0.1:$ApiPort/api/auth/me"
+  $apiReady = $false
+  for ($i = 0; $i -lt 120; $i++) {
+    if ($apiProc.HasExited) {
+      throw "La API termino antes de quedar lista. Revisa data\logs\api.out.log."
+    }
+    try {
+      $response = Invoke-WebRequest -UseBasicParsing -Uri $apiReadyUrl -TimeoutSec 2
+      if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
+        $apiReady = $true
+        break
+      }
+    } catch {
+      $statusCode = 0
+      if ($_.Exception.Response) { $statusCode = [int]$_.Exception.Response.StatusCode }
+      if ($statusCode -eq 401 -or $statusCode -eq 403) {
+        $apiReady = $true
+        break
+      }
+    }
+    Start-Sleep -Seconds 1
+  }
+  if (-not $apiReady) {
+    throw "La API no respondio en $apiReadyUrl. Revisa data\logs\api.out.log."
+  }
+  Write-Host "   - API lista en http://127.0.0.1:$ApiPort."
+
   $frontProc = Start-Process -FilePath $nodeExe -ArgumentList "server.js" -WorkingDirectory $frontBuild -RedirectStandardOutput $frontOutLog -RedirectStandardError $frontErrLog -PassThru -WindowStyle Minimized
   Write-Host "   - Front iniciado (PID $($frontProc.Id))"
 
