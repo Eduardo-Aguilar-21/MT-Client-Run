@@ -39,6 +39,12 @@ $nodeCandidatePaths = @(
 
 $script:DockerExe = $null
 
+function Test-IsProcessElevated {
+  $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+  $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+  return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
 function Ensure-Folder([string]$Path) {
   if (-not (Test-Path -Path $Path)) {
     New-Item -ItemType Directory -Path $Path | Out-Null
@@ -249,6 +255,9 @@ function Wait-PortableAppDatabase([string]$Port, [string]$DbName, [string]$DbUse
 
 function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser, [string]$DbPassword) {
   Write-Host "[4/6] Base de datos local Run: iniciando PostgreSQL portable..."
+  if (Test-IsProcessElevated) {
+    throw "MT Cotiza Client no debe ejecutarse como administrador. Cierra esta ventana y abre la app con doble click normal; PostgreSQL portable no permite iniciar con privilegios elevados."
+  }
   $pgData = Join-Path $dataRoot "db"
   $pgOutLog = Join-Path $dataRoot "logs\postgres.out.log"
   $pgErrLog = Join-Path $dataRoot "logs\postgres.err.log"
@@ -298,26 +307,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
     $postgresErr = ""
     if (Test-Path -Path $pgErrLog) { $postgresErr = Get-Content -Path $pgErrLog -Raw -ErrorAction SilentlyContinue }
     if ($postgresErr -like "*privilegios administrativos*") {
-      Write-Host "   - PostgreSQL rechazo privilegios administrativos. Reintentando con token restringido..."
-      $postgresProc = $null
-      $cmdFile = Join-Path $dataRoot "run-postgres.cmd"
-      $vbsFile = Join-Path $dataRoot "run-postgres-hidden.vbs"
-      $cmd = "@echo off`r`ncd /d ""$portablePostgresBin"" && ""$postgresExe"" -D ""$pgData"" -p $Port -h 127.0.0.1 >> ""$pgOutLog"" 2>> ""$pgErrLog"""
-      Set-Content -Path $cmdFile -Value $cmd -Encoding ASCII
-      $vbs = "Set sh = CreateObject(""WScript.Shell"")`r`nsh.Run Chr(34) & ""$cmdFile"" & Chr(34), 0, False"
-      Set-Content -Path $vbsFile -Value $vbs -Encoding ASCII
-      $runasCommand = "wscript.exe //B ""$vbsFile"""
-      Write-Host "   - Ejecutando PostgreSQL con token restringido en segundo plano..."
-      Start-Process -FilePath "runas.exe" -ArgumentList @("/trustlevel:0x20000", """$runasCommand""") -WorkingDirectory $runRoot -WindowStyle Hidden | Out-Null
-      $isReady = $false
-      for ($i = 0; $i -lt 80; $i++) {
-        & (Resolve-PortablePostgresExecutable "pg_isready.exe") @("-h", "127.0.0.1", "-p", $Port) >$null 2>$null
-        if ($LASTEXITCODE -eq 0) {
-          $isReady = $true
-          break
-        }
-        Start-Sleep -Seconds 2
-      }
+      throw "PostgreSQL portable rechazo privilegios administrativos. Abre MT Cotiza Client con doble click normal, no como administrador."
     }
   }
 
