@@ -31,21 +31,29 @@ function readEnvValue(key, fallback) {
 
 function waitForUrl(url, timeoutMs = 90000) {
   const started = Date.now();
+  let lastError = '';
   return new Promise((resolve, reject) => {
     const tick = () => {
       const req = http.get(url, (res) => {
         res.resume();
         if (res.statusCode >= 200 && res.statusCode < 500) resolve(true);
-        else retry();
+        else {
+          lastError = `HTTP ${res.statusCode}`;
+          retry();
+        }
       });
       req.setTimeout(1500, () => {
+        lastError = 'timeout';
         req.destroy();
         retry();
       });
-      req.on('error', retry);
+      req.on('error', (err) => {
+        lastError = err && err.message ? err.message : 'connection error';
+        retry();
+      });
     };
     const retry = () => {
-      if (Date.now() - started > timeoutMs) reject(new Error(`No respondio ${url}`));
+      if (Date.now() - started > timeoutMs) reject(new Error(`No respondio ${url}${lastError ? ` (${lastError})` : ''}`));
       else setTimeout(tick, 1000);
     };
     tick();
@@ -125,14 +133,16 @@ app.whenReady().then(async () => {
   await session.defaultSession.clearCache().catch(() => {});
   createWindow();
   const frontPort = readEnvValue('FRONTEND_PORT', '3000');
-  const appHost = readEnvValue("FRONTEND_HOST", "localhost");
+  const configuredHost = readEnvValue("FRONTEND_HOST", "127.0.0.1");
+  const appHost = configuredHost === 'localhost' ? '127.0.0.1' : configuredHost;
   const loginUrl = `http://${appHost}:${frontPort}/login`;
+  const fallbackLoginUrl = appHost === '127.0.0.1' ? `http://localhost:${frontPort}/login` : `http://127.0.0.1:${frontPort}/login`;
   try {
     await waitForUrl(loginUrl, 2000).catch(() => {
       startServices();
-      return waitForUrl(loginUrl, 120000);
+      return waitForUrl(loginUrl, 180000).catch(() => waitForUrl(fallbackLoginUrl, 30000));
     });
-    await mainWindow.loadURL(loginUrl);
+    await mainWindow.loadURL(loginUrl).catch(() => mainWindow.loadURL(fallbackLoginUrl));
   } catch (err) {
     await mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`
       <html><body style="font-family:Segoe UI,Arial,sans-serif;padding:32px">
