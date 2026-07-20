@@ -106,9 +106,8 @@ function createWindow() {
       <head><title>MT Cotiza Client</title></head>
       <body style="font-family:Segoe UI,Arial,sans-serif;background:#ffffff;margin:0;display:grid;place-items:center;height:100vh;color:#1f2933">
         <main style="text-align:center">
-          ${logoDataUri ? `<img src="${logoDataUri}" alt="MT Cotiza" style="display:block;width:180px;max-width:52vw;height:auto;margin:0 auto 26px;object-fit:contain" />` : ""}
+          ${logoDataUri ? `<img src="${logoDataUri}" alt="MT Cotiza" style="display:block;width:300px;max-width:72vw;height:auto;margin:0 auto 30px;object-fit:contain" />` : ""}
           <div style="width:54px;height:54px;border:5px solid #e5e7eb;border-top-color:#1f2937;border-radius:50%;margin:0 auto 22px;animation:spin .85s linear infinite"></div>
-          <h1 style="margin:0 0 10px;font-size:28px">MT Cotiza Client</h1>
           <p style="margin:0;font-size:15px">Iniciando servicios locales...</p>
           <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
           <p style="margin-top:16px;font-size:12px;color:#6b7280">Logs: data\\logs\\electron-run.log</p>
