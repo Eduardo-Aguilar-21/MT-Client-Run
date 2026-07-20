@@ -253,11 +253,15 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
     if (Test-Path -Path $pgErrLog) { $postgresErr = Get-Content -Path $pgErrLog -Raw -ErrorAction SilentlyContinue }
     if ($postgresErr -like "*privilegios administrativos*") {
       Write-Host "   - PostgreSQL rechazo privilegios administrativos. Reintentando con token restringido..."
+      $postgresProc = $null
       $cmdFile = Join-Path $dataRoot "run-postgres.cmd"
-      $cmd = "cd /d ""$portablePostgresBin"" && ""$postgresExe"" -D ""$pgData"" -p $Port -h 127.0.0.1 >> ""$pgOutLog"" 2>> ""$pgErrLog"""
+      $vbsFile = Join-Path $dataRoot "run-postgres-hidden.vbs"
+      $cmd = "@echo off`r`ncd /d ""$portablePostgresBin"" && ""$postgresExe"" -D ""$pgData"" -p $Port -h 127.0.0.1 >> ""$pgOutLog"" 2>> ""$pgErrLog"""
       Set-Content -Path $cmdFile -Value $cmd -Encoding ASCII
-      $runasCommand = "cmd.exe /c ""$cmdFile"""
-      Write-Host "   - Ejecutando: runas /trustlevel:0x20000 $runasCommand"
+      $vbs = "Set sh = CreateObject(""WScript.Shell"")`r`nsh.Run Chr(34) & ""$cmdFile"" & Chr(34), 0, False"
+      Set-Content -Path $vbsFile -Value $vbs -Encoding ASCII
+      $runasCommand = "wscript.exe //B ""$vbsFile"""
+      Write-Host "   - Ejecutando PostgreSQL con token restringido en segundo plano..."
       Start-Process -FilePath "runas.exe" -ArgumentList @("/trustlevel:0x20000", """$runasCommand""") -WorkingDirectory $runRoot -WindowStyle Hidden | Out-Null
       $isReady = $false
       for ($i = 0; $i -lt 80; $i++) {
