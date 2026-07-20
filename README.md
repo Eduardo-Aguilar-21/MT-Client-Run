@@ -230,3 +230,39 @@ Ejecutar:
 ```text
 stop-MT-Cotiza-Client.bat
 ```
+
+## Opcion app de escritorio con Electron
+
+El modo web sigue disponible con:
+
+```text
+start-MT-Cotiza-Client.bat
+```
+
+Para probar la ventana tipo app nativa, primero prepara Electron una vez:
+
+```text
+prepare-MT-Cotiza-Client-Run-Electron.bat
+```
+
+Luego inicia:
+
+```text
+start-MT-Cotiza-Client-Electron.bat
+```
+
+Este modo usa los mismos servicios locales que el modo web:
+
+```text
+API: http://127.0.0.1:8080
+Front: http://127.0.0.1:3000
+PostgreSQL: runtime/postgres
+```
+
+Electron arranca `MT-Cotiza-Client-Run.ps1 -NoBrowser`, espera que el front responda y lo muestra dentro de una ventana de escritorio. Si falla, revisa:
+
+```text
+data/logs/electron-run.log
+```
+
+El navegador normal queda como fallback y no se elimina.

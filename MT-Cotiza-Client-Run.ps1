@@ -1,3 +1,7 @@
+param(
+  [switch]$NoBrowser
+)
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
@@ -539,7 +543,9 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   if (-not $ready) {
     Write-Host "No pude confirmar $frontUrl aun, pero intentare abrirlo igualmente."
   }
-  Start-Process -FilePath "explorer.exe" -ArgumentList $frontUrl
+  if (-not $NoBrowser) {
+    Start-Process -FilePath "explorer.exe" -ArgumentList $frontUrl
+  }
   Write-Host "Modo standalone activo. Ejecutando API y Front con java/node locales."
   Write-Host "Logs API: $apiOutLog | $apiErrLog"
   Write-Host "Logs Front: $frontOutLog | $frontErrLog"
@@ -602,7 +608,9 @@ function Start-Docker([string]$frontPort) {
     }
   }
   if (-not $ready) { throw "No pude abrir $frontUrl. Revisa logs: docker compose logs -f" }
-  Start-Process -FilePath "explorer.exe" -ArgumentList $frontUrl
+  if (-not $NoBrowser) {
+    Start-Process -FilePath "explorer.exe" -ArgumentList $frontUrl
+  }
   Write-Host "Listo. Servicio API: http://localhost:8080 | UI: $frontUrl"
   Write-Host "Para detener: docker compose --env-file .env -f $composeFile down"
   Write-Host "Logs: docker compose --env-file .env -f $composeFile logs -f"

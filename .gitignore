@@ -5,3 +5,5 @@ standalone.pids.json
 .env
 
 runtime/_downloads/
+electron/node_modules/
+electron/package-lock.json
