@@ -109,7 +109,8 @@ function createWindow() {
 app.whenReady().then(async () => {
   createWindow();
   const frontPort = readEnvValue('FRONTEND_PORT', '3000');
-  const loginUrl = `http://127.0.0.1:${frontPort}/login`;
+  const appHost = readEnvValue("FRONTEND_HOST", "localhost");
+  const loginUrl = `http://${appHost}:${frontPort}/login`;
   try {
     await waitForUrl(loginUrl, 2000).catch(() => {
       startServices();
