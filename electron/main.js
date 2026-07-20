@@ -5,9 +5,12 @@ const path = require('path');
 const http = require('http');
 
 const runRoot = path.resolve(__dirname, '..');
-const logsDir = path.join(runRoot, 'data', 'logs');
+const defaultDataRoot = path.join(process.env.LOCALAPPDATA || runRoot, 'MT Cotiza Client', 'data');
+const dataRoot = process.env.MT_COTIZA_DATA_ROOT || defaultDataRoot;
+process.env.MT_COTIZA_DATA_ROOT = dataRoot;
+const logsDir = path.join(dataRoot, 'logs');
 const runLog = path.join(logsDir, 'electron-run.log');
-const electronProfileDir = path.join(runRoot, 'data', 'electron-profile');
+const electronProfileDir = path.join(dataRoot, 'electron-profile');
 let runner = null;
 let mainWindow = null;
 
@@ -126,7 +129,7 @@ function createWindow() {
           <div style="width:54px;height:54px;border:5px solid #e5e7eb;border-top-color:#1f2937;border-radius:50%;margin:0 auto 22px;animation:spin .85s linear infinite"></div>
           <p style="margin:0;font-size:15px">Iniciando servicios locales...</p>
           <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-          <p style="margin-top:16px;font-size:12px;color:#6b7280">Logs: data\\logs\\electron-run.log</p>
+          <p style="margin-top:16px;font-size:12px;color:#6b7280">Logs: %LOCALAPPDATA%\\MT Cotiza Client\\data\\logs\\electron-run.log</p>
         </main>
       </body>
     </html>
@@ -153,7 +156,7 @@ app.whenReady().then(async () => {
       <html><body style="font-family:Segoe UI,Arial,sans-serif;padding:32px">
         <h1>No se pudo iniciar MT Cotiza Client</h1>
         <p>${String(err.message || err)}</p>
-        <p>Revisa <code>data\\logs\\electron-run.log</code>.</p>
+        <p>Revisa <code>%LOCALAPPDATA%\\MT Cotiza Client\\data\\logs\\electron-run.log</code>.</p>
       </body></html>
     `));
   }

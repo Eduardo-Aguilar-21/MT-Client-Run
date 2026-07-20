@@ -14,7 +14,10 @@ $composeFile = Join-Path $runRoot "docker-compose.yml"
 $apiDir = Join-Path $repoRoot "MT-Cotiza-Client-API"
 $frontDir = Join-Path $repoRoot "MT-Cotiza-Client-Front"
 $buildRoot = Join-Path $runRoot "build"
-$dataRoot = Join-Path $runRoot "data"
+$dataRoot = $env:MT_COTIZA_DATA_ROOT
+if ([string]::IsNullOrWhiteSpace($dataRoot)) {
+  $dataRoot = Join-Path $env:LOCALAPPDATA "MT Cotiza Client\data"
+}
 $apiBuild = Join-Path $buildRoot "api"
 $frontBuild = Join-Path $buildRoot "front"
 $pidFile = Join-Path $runRoot "standalone.pids.json"

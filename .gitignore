@@ -17,3 +17,4 @@ build/api/logs/
 build/api/*.log
 build/api/*.out.log
 build/api/*.err.log
+installer/output/
