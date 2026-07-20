@@ -98,7 +98,13 @@ function getLastRunLogLine() {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .filter((line) => !line.startsWith('at ') && !line.includes('CategoryInfo') && !line.includes('FullyQualifiedErrorId'));
+    .filter((line) => !line.startsWith('at '))
+    .filter((line) => !line.startsWith('+'))
+    .filter((line) => !line.includes('CategoryInfo'))
+    .filter((line) => !line.includes('FullyQualifiedErrorId'))
+    .filter((line) => !line.includes('RuntimeException'))
+    .filter((line) => !line.includes('OperationStopped'))
+    .filter((line) => !line.toLowerCase().startsWith('revisa '));
   return lines.length ? lines[lines.length - 1].slice(0, 180) : 'Preparando arranque...';
 }
 
@@ -111,6 +117,7 @@ function getLogoDataUri() {
 
 function createWindow() {
   const logoDataUri = getLogoDataUri();
+  const logPathText = runLog.replace(/\\/g, '\\\\');
 
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -142,7 +149,7 @@ function createWindow() {
           <p style="margin:0;font-size:15px">Iniciando servicios locales...</p>
           <p id="status" style="margin:12px auto 0;max-width:720px;font-size:12px;line-height:1.45;color:#6b7280">Preparando arranque...</p>
           <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-          <p style="margin-top:16px;font-size:12px;color:#9ca3af">Logs: %LOCALAPPDATA%\\MT Cotiza Client\\data\\logs\\electron-run.log</p>
+          <p style="margin-top:16px;font-size:12px;color:#9ca3af">Logs: ${logPathText}</p>
           <script>
             window.mtCotizaLauncher.onStatus((message) => {
               const el = document.getElementById('status');

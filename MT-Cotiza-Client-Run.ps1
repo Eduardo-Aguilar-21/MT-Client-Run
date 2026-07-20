@@ -80,6 +80,22 @@ function Ensure-EnvFile {
       Add-Content -Path $envFile -Value $missingLines
       Write-Host "Se actualizaron variables faltantes en .env desde .env.example."
     }
+
+    $envContent = Get-Content -Path $envFile
+    $updatedEnvContent = @()
+    $migratedPort = $false
+    foreach ($line in $envContent) {
+      if ($line -match '^\s*POSTGRES_PORT\s*=\s*5434\s*$') {
+        $updatedEnvContent += "POSTGRES_PORT=15434"
+        $migratedPort = $true
+      } else {
+        $updatedEnvContent += $line
+      }
+    }
+    if ($migratedPort) {
+      Set-Content -Path $envFile -Value $updatedEnvContent -Encoding UTF8
+      Write-Host "Se migro POSTGRES_PORT de 5434 a 15434 para evitar conflictos con PostgreSQL instalado."
+    }
     return
   }
   Copy-Item -Path $envExampleFile -Destination $envFile -Force
