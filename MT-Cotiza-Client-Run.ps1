@@ -522,13 +522,8 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
     "-Dspring.datasource.password=$DbPassword"
     "-Dspring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect"
     "-Dspring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect"
-    "-Djakarta.persistence.jdbc.url=$DbUrl"
-    "-Djakarta.persistence.jdbc.user=$DbUser"
-    "-Djakarta.persistence.jdbc.password=$DbPassword"
-    "-Dhibernate.connection.url=$DbUrl"
-    "-Dhibernate.connection.username=$DbUser"
-    "-Dhibernate.connection.password=$DbPassword"
-    "-Dhibernate.dialect=org.hibernate.dialect.PostgreSQLDialect"
+    "-Dspring.datasource.hikari.initialization-fail-timeout=60000"
+    "-Dspring.datasource.hikari.connection-timeout=30000"
     "-jar",
     $servers.ApiJar
   )
