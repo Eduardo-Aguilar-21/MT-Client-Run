@@ -100,7 +100,7 @@ function Get-EnvValue([string]$Key, [string]$Default = "") {
 
 function Resolve-DatabaseCredentials([string]$RunDbMode, [string]$DbPort, [string]$DbName, [string]$DefaultDbUser, [string]$DefaultDbPassword) {
   $mode = if ([string]::IsNullOrWhiteSpace($RunDbMode)) { "external" } else { $RunDbMode.ToLowerInvariant().Trim() }
-  $resultUrl = "jdbc:postgresql://127.0.0.1:$DbPort/$DbName"
+  $resultUrl = "jdbc:postgresql://127.0.0.1:$DbPort/$DbName?sslmode=disable"
   $resultUser = Get-EnvValue "POSTGRES_USER" $DefaultDbUser
   $resultPassword = Get-EnvValue "POSTGRES_PASSWORD" $DefaultDbPassword
 
@@ -280,6 +280,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   }
 
   [Environment]::SetEnvironmentVariable("PGCONNECT_TIMEOUT", "2", "Process")
+  [Environment]::SetEnvironmentVariable("PGSSLMODE", "disable", "Process")
   $adminUser = "postgres"
   $adminReady = $false
   for ($i = 0; $i -lt 10; $i++) {
@@ -504,6 +505,7 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
     "SPRING_DATASOURCE_URL" = $DbUrl
     "SPRING_DATASOURCE_USERNAME" = $DbUser
     "SPRING_DATASOURCE_PASSWORD" = $DbPassword
+    "PGSSLMODE" = "disable"
   }
   foreach ($k in $envSet.Keys) {
     [Environment]::SetEnvironmentVariable($k, $envSet[$k], "Process")
