@@ -1,10 +1,5 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-if not exist "runtime\node\npm.cmd" (
-  echo Falta runtime\node\npm.cmd. Ejecuta prepare-MT-Cotiza-Client-Run-Runtime.bat primero.
-  pause
-  exit /b 1
-)
-"%~dp0runtime\node\npm.cmd" --prefix "%~dp0electron" install
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0prepare-MT-Cotiza-Client-Run-Electron.ps1"
 if errorlevel 1 pause
