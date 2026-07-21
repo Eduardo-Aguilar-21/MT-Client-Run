@@ -1,162 +1,78 @@
-module.exports=[84505,a=>{"use strict";let b=(0,a.i(70106).default)("download",[["path",{d:"M12 15V3",key:"m9g1x1"}],["path",{d:"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",key:"ih7n3h"}],["path",{d:"m7 10 5 5 5-5",key:"brsn70"}]]);a.s(["Download",()=>b],84505)},96221,a=>{"use strict";let b=(0,a.i(70106).default)("loader-circle",[["path",{d:"M21 12a9 9 0 1 1-6.219-8.56",key:"13zald"}]]);a.s(["Loader2",()=>b],96221)},41398,a=>{"use strict";var b=a.i(87924);a.i(38246);var c=a.i(97895);function d({className:a,...d}){return(0,b.jsx)("div",{"data-slot":"card",className:(0,c.cn)("bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",a),...d})}function e({className:a,...d}){return(0,b.jsx)("div",{"data-slot":"card-header",className:(0,c.cn)("@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-2 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",a),...d})}function f({className:a,...d}){return(0,b.jsx)("div",{"data-slot":"card-title",className:(0,c.cn)("leading-none font-semibold",a),...d})}function g({className:a,...d}){return(0,b.jsx)("div",{"data-slot":"card-content",className:(0,c.cn)("px-6",a),...d})}function h({title:a,description:c,action:d}){return(0,b.jsxs)("div",{className:"mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between",children:[(0,b.jsxs)("div",{className:"min-w-0",children:[(0,b.jsx)("h1",{className:"text-2xl font-semibold tracking-tight sm:text-3xl",children:a}),c?(0,b.jsx)("p",{className:"text-muted-foreground mt-1 text-sm",children:c}):null]}),d]})}function i({value:a}){let d=a.toUpperCase(),e=d.includes("ACTIV")||d.includes("HABIL")||d.includes("APROB")||d.includes("PAG")||d.includes("FINAL")?"bg-emerald-500/12 text-emerald-700 ring-emerald-500/25":d.includes("INACT")||d.includes("RECH")||d.includes("ANUL")||d.includes("CANCEL")?"bg-rose-500/12 text-rose-700 ring-rose-500/25":d.includes("PEND")||d.includes("REVISION")||d.includes("PROCESO")?"bg-amber-500/12 text-amber-700 ring-amber-500/25":"bg-sky-500/12 text-sky-700 ring-sky-500/25";return(0,b.jsx)("span",{className:(0,c.cn)("inline-flex max-w-full items-center rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 sm:text-xs",e),children:a.replaceAll("_"," ")})}function j({title:a,action:c,children:h}){return(0,b.jsxs)(d,{className:"border-border/70",children:[(0,b.jsxs)(e,{className:"flex min-w-0 flex-col items-start justify-between gap-4 sm:flex-row sm:items-center",children:[(0,b.jsx)(f,{children:a}),c]}),(0,b.jsx)(g,{className:"min-w-0 overflow-hidden",children:h})]})}a.s(["PageHeader",()=>h,"Panel",()=>j,"StatusBadge",()=>i],41398)},5522,a=>{"use strict";var b=a.i(87924),c=a.i(97895);function d({className:a,type:d,...e}){let f=e.title||e["aria-label"]||("string"==typeof e.placeholder?e.placeholder:void 0)||e.name;return(0,b.jsx)("input",{type:d,"data-slot":"input",title:f,"aria-label":e["aria-label"]||f,className:(0,c.cn)("file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm","focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]","aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",a),...e})}a.s(["Input",()=>d])},62213,a=>{"use strict";let b=(0,a.i(70106).default)("x",[["path",{d:"M18 6 6 18",key:"1bl5f8"}],["path",{d:"m6 6 12 12",key:"d8bk6v"}]]);a.s(["default",()=>b])},83196,a=>{"use strict";var b=a.i(87924),c=a.i(97895);function d({label:a,children:d,className:e,hint:f,required:g}){return(0,b.jsxs)("div",{className:(0,c.cn)("space-y-2",e),children:[(0,b.jsxs)("label",{className:"text-foreground flex items-center gap-2 text-sm font-medium",children:[a,g?(0,b.jsx)("span",{className:"ml-1 text-rose-600",children:"*"}):null]}),d,f?(0,b.jsx)("div",{className:"text-muted-foreground text-xs",children:f}):null]})}a.s(["FormField",()=>d])},14166,a=>{"use strict";let b=(0,a.i(70106).default)("file-check-corner",[["path",{d:"M10.5 22H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v6",key:"g5mvt7"}],["path",{d:"M14 2v5a1 1 0 0 0 1 1h5",key:"wfsgrz"}],["path",{d:"m14 20 2 2 4-4",key:"15kota"}]]);a.s(["FileCheck2",()=>b],14166)},24537,a=>{"use strict";function b(a,b){return 0===a?b?4:5:b?5:6}function c(a){let c=!0!==a.hideObservations||!0!==a.hideCommercialTerms,d=a.items?.length?a.items:[];if(!d.length)return[{items:[],isFirst:!0,isLast:!0,pageNumber:1,totalPages:1}];let e=[],f=[],g=0,h=0,i=b(0,c);for(let a of d){let d=Math.max(1,Math.ceil(Math.max((a.description||"").trim().length,24)/180));f.length>0&&g+d>i&&(e.push(f),h+=1,f=[],g=0,i=b(h,c)),f.push(a),g+=d}return(f.length||!e.length)&&e.push(f),e.map((a,b)=>({items:a,isFirst:0===b,isLast:b===e.length-1,pageNumber:b+1,totalPages:e.length}))}a.s(["buildQuotationPageChunks",()=>c])},51409,a=>{"use strict";var b=a.i(25503),c=a.i(24537);function d(a){return String(a??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}function e(a,b="PEN"){return new Intl.NumberFormat("es-PE",{style:"currency",currency:b,maximumFractionDigits:2}).format(a??0)}function f(a){if(!a)return"-";if(/^\d{2}\/\d{2}\/\d{4}$/.test(a))return a;let b=a.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(b)return`${b[3]}/${b[2]}/${b[1]}`;let c=new Date(a);return Number.isNaN(c.getTime())?"-":`${String(c.getDate()).padStart(2,"0")}/${String(c.getMonth()+1).padStart(2,"0")}/${c.getFullYear()}`}async function g(a){return new Promise((b,c)=>{let d=new FileReader;d.onload=()=>b(String(d.result||"")),d.onerror=()=>c(Error("No se pudo convertir el logo a base64.")),d.readAsDataURL(a)})}async function h(a){let c=(0,b.normalizeAssetPath)(a);if(!c)return"";try{let a=await fetch(c.startsWith("http")?c:`${window.location.origin}${c}`);if(!a.ok)return"";return await g(await a.blob())}catch{return""}}function i(a,b,c){return`<div class='summary-row'><span>${d(a)}</span><strong>${d(e(b,c))}</strong></div>`}async function j(a,b){let g=await h(b?.logoAsset),j=d(b?.businessName||b?.name||"MT-Cotiza"),k=d(b?.ruc||"-"),l=d(b?.address||"-"),m=d(b?.phone||"-"),n=d(b?.email||"-"),o=d(b?.footerMessage||"Documento emitido para control comercial interno."),p=d(a.reportsEmail||b?.reportsEmail||b?.email||"informes@mt-cotiza.com"),q=d(a.reportLink||b?.reportLink||"https://mt-cotiza.com"),r=d(b?.logoText||b?.name||"MT-Cotiza"),s=d(a.logoText||b?.ruc||"-"),t=d(a.reportLink||b?.phone||"-"),u=!1!==a.includeDiscount,v=!1!==a.includeTax,w=a.items?.some(a=>!(a.noDiscount??a.discount<=0)),x=!0!==a.hideObservations,y=!0!==a.hideCommercialTerms,z=!!(a.plate||a.codeReference||a.frameworkContract||a.frameworkContractPosition||a.technicalParameters),A=(0,c.buildQuotationPageChunks)(a),B=g?`<img src="${g}" alt="${j}" style="height:96px;max-width:360px;object-fit:contain;display:block;" />`:`<div style="display:inline-flex;align-items:center;justify-content:center;width:120px;height:96px;border-radius:18px;background:#e0f2fe;color:#0f172a;font-weight:700;font-size:28px;">${d(b?.logoText||b?.name||"MT")}</div>`;return`
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    @page { size: A4; margin: 0; }
-    html, body { margin: 0; padding: 0; background: #ffffff; color: #0f172a; }
-    * { box-sizing: border-box; }
-    body { font-family: Arial, Helvetica, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .page { width: 210mm; min-height: 297mm; padding: 18mm 16mm 16mm; break-after: page; page-break-after: always; }
-    .page:last-child { break-after: auto; page-break-after: auto; }
-    .document-header { min-height: 20mm; margin-top: 14px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px 14px; color: #334155; font-size: 13px; line-height: 1.7; text-align: center; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; overflow: hidden; }
-    .company-meta { margin-top: 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6mm; color: #475569; font-size: 11px; line-height: 1.5; }
-    .header { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; border-bottom: 1px solid #e2e8f0; padding-bottom: 18px; }
-    .company { flex: 1; }
-    .badge { width: 58mm; border: 2px solid #0f172a; border-radius: 18px; padding: 10px 12px; }
-    .info-strip { margin-top: 14px; display: flex; gap: 16px; align-items: stretch; }
-    .info-main { flex: 1; border: 1px solid #e2e8f0; border-radius: 18px; padding: 12px 14px; background: #f8fafc; }
-    .info-box { width: 320px; border: 1px solid #e2e8f0; border-radius: 18px; padding: 12px 14px; background: #fff; }
-    .badge-title { color: #64748b; font-size: 9px; letter-spacing: .18em; font-weight: 700; }
-    .badge-code { margin-top: 6px; font-size: 19px; font-weight: 700; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; }
-    .badge-meta { margin-top: 4px; color: #475569; font-size: 10px; line-height: 1.25; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; }
-    .title-strip { margin-top: 12px; padding: 10px 14px; background: #eff6ff; border: 1px solid #dbeafe; font-size: 14px; font-weight: 700; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; }
-    .grid { margin-top: 18px; display: grid; grid-template-columns: 1.05fr .95fr; gap: 16px; }
-    .card { border: 1px solid #e2e8f0; border-radius: 20px; padding: 16px; }
-    .mini-card { border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px; background: #fff; }
-    .mini-card .label { font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #64748b; }
-    .mini-card .value { margin-top: 4px; font-size: 13px; font-weight: 600; color: #0f172a; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; }
-    .label { color: #64748b; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; }
-    .customer-name { margin-top: 6px; font-size: 18px; font-weight: 700; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; }
-    .description { margin-top: 8px; color: #475569; line-height: 1.6; font-size: 13px; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; }
-    .summary-row { display: flex; justify-content: space-between; gap: 16px; margin-top: 10px; font-size: 13px; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; }
-    .summary-row strong { color: #0f172a; white-space: nowrap; }
-    .table-wrap { margin-top: 18px; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
-    thead { background: #f8fafc; color: #475569; }
-    th { padding: 12px 10px; text-align: left; font-weight: 700; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; }
-    tbody td { padding: 12px 10px; border-top: 1px solid #e2e8f0; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; }
-    .sections { margin-top: 16px; display: grid; grid-template-columns: 1fr 0.9fr; gap: 16px; }
-    .box-title { color: #64748b; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; }
-    .box-value { margin-top: 8px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 12px 14px; color: #334155; line-height: 1.7; font-size: 13px; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; overflow: hidden; }
-    .totals { border: 1px solid #e2e8f0; border-radius: 20px; padding: 16px; }
-    .totals-row { display: flex; justify-content: space-between; gap: 16px; margin-top: 8px; font-size: 13px; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; }
-    .totals-row.total { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; font-size: 15px; font-weight: 700; }
-    .footer { margin-top: 18px; color: #475569; font-size: 12px; line-height: 1.7; white-space: pre-wrap; overflow-wrap:anywhere; word-break: break-word; }
-    .footer-note { margin-top: 6px; padding-top: 12px; border-top: 1px dashed #cbd5e1; }
-  </style>
-</head>
-<body>
-  ${A.map(b=>{var c;let g,h=b.isFirst?"COTIZACIÓN":`CONTINUACI\xd3N ${b.pageNumber}/${b.totalPages}`,A=b.isFirst?d(a.title||"Cotización comercial"):`Continuaci\xf3n de ${d(a.title||"Cotización comercial")}`,C=b.isFirst?`
-        <div class='grid'>
-          <div class='card'>
-            <div class='label'>Cliente</div>
-            <div class='customer-name'>${d(a.customerName)}</div>
-            <div class='description'>${d(a.description||"-")}</div>
-            <div style='margin-top:10px;color:#475569;font-size:13px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;'>
-              ${a.customerDocumentNumber?`<div>${d(a.customerDocumentType||"RUC")}: ${d(a.customerDocumentNumber)}</div>`:""}
-            </div>
-          </div>
-          <div class='card'>
-            <div class='label'>Resumen</div>
-            ${i("Subtotal",a.subtotal,a.currency)}
-            ${u?i("Descuento global",a.discount,a.currency):""}
-            ${v?i("Impuesto",a.tax,a.currency):""}
-            <div class='summary-row' style='padding-top:12px;border-top:1px solid #e2e8f0;font-size:15px;font-weight:700;'><span>Total</span><strong>${d(e(a.total,a.currency))}</strong></div>
-          </div>
+module.exports=[84505,a=>{"use strict";let b=(0,a.i(70106).default)("download",[["path",{d:"M12 15V3",key:"m9g1x1"}],["path",{d:"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",key:"ih7n3h"}],["path",{d:"m7 10 5 5 5-5",key:"brsn70"}]]);a.s(["Download",()=>b],84505)},96221,a=>{"use strict";let b=(0,a.i(70106).default)("loader-circle",[["path",{d:"M21 12a9 9 0 1 1-6.219-8.56",key:"13zald"}]]);a.s(["Loader2",()=>b],96221)},41398,a=>{"use strict";var b=a.i(87924);a.i(38246);var c=a.i(97895);function d({className:a,...d}){return(0,b.jsx)("div",{"data-slot":"card",className:(0,c.cn)("bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",a),...d})}function e({className:a,...d}){return(0,b.jsx)("div",{"data-slot":"card-header",className:(0,c.cn)("@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start gap-2 px-6 has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",a),...d})}function f({className:a,...d}){return(0,b.jsx)("div",{"data-slot":"card-title",className:(0,c.cn)("leading-none font-semibold",a),...d})}function g({className:a,...d}){return(0,b.jsx)("div",{"data-slot":"card-content",className:(0,c.cn)("px-6",a),...d})}function h({title:a,description:c,action:d}){return(0,b.jsxs)("div",{className:"mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between",children:[(0,b.jsxs)("div",{className:"min-w-0",children:[(0,b.jsx)("h1",{className:"text-2xl font-semibold tracking-tight sm:text-3xl",children:a}),c?(0,b.jsx)("p",{className:"text-muted-foreground mt-1 text-sm",children:c}):null]}),d]})}function i({value:a}){let d=a.toUpperCase(),e=d.includes("ACTIV")||d.includes("HABIL")||d.includes("APROB")||d.includes("PAG")||d.includes("FINAL")?"bg-emerald-500/12 text-emerald-700 ring-emerald-500/25":d.includes("INACT")||d.includes("RECH")||d.includes("ANUL")||d.includes("CANCEL")?"bg-rose-500/12 text-rose-700 ring-rose-500/25":d.includes("PEND")||d.includes("REVISION")||d.includes("PROCESO")?"bg-amber-500/12 text-amber-700 ring-amber-500/25":"bg-sky-500/12 text-sky-700 ring-sky-500/25";return(0,b.jsx)("span",{className:(0,c.cn)("inline-flex max-w-full items-center rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 sm:text-xs",e),children:a.replaceAll("_"," ")})}function j({title:a,action:c,children:h}){return(0,b.jsxs)(d,{className:"border-border/70",children:[(0,b.jsxs)(e,{className:"flex min-w-0 flex-col items-start justify-between gap-4 sm:flex-row sm:items-center",children:[(0,b.jsx)(f,{children:a}),c]}),(0,b.jsx)(g,{className:"min-w-0 overflow-hidden",children:h})]})}a.s(["PageHeader",()=>h,"Panel",()=>j,"StatusBadge",()=>i],41398)},5522,a=>{"use strict";var b=a.i(87924),c=a.i(97895);function d({className:a,type:d,...e}){let f=e.title||e["aria-label"]||("string"==typeof e.placeholder?e.placeholder:void 0)||e.name;return(0,b.jsx)("input",{type:d,"data-slot":"input",title:f,"aria-label":e["aria-label"]||f,className:(0,c.cn)("file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm","focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]","aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",a),...e})}a.s(["Input",()=>d])},62213,a=>{"use strict";let b=(0,a.i(70106).default)("x",[["path",{d:"M18 6 6 18",key:"1bl5f8"}],["path",{d:"m6 6 12 12",key:"d8bk6v"}]]);a.s(["default",()=>b])},83196,a=>{"use strict";var b=a.i(87924),c=a.i(97895);function d({label:a,children:d,className:e,hint:f,required:g}){return(0,b.jsxs)("div",{className:(0,c.cn)("space-y-2",e),children:[(0,b.jsxs)("label",{className:"text-foreground flex items-center gap-2 text-sm font-medium",children:[a,g?(0,b.jsx)("span",{className:"ml-1 text-rose-600",children:"*"}):null]}),d,f?(0,b.jsx)("div",{className:"text-muted-foreground text-xs",children:f}):null]})}a.s(["FormField",()=>d])},14166,a=>{"use strict";let b=(0,a.i(70106).default)("file-check-corner",[["path",{d:"M10.5 22H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v6",key:"g5mvt7"}],["path",{d:"M14 2v5a1 1 0 0 0 1 1h5",key:"wfsgrz"}],["path",{d:"m14 20 2 2 4-4",key:"15kota"}]]);a.s(["FileCheck2",()=>b],14166)},24537,96109,a=>{"use strict";function b(a,b){return 0===a?b?4:5:b?5:6}function c(a){let c=!0!==a.hideObservations||!0!==a.hideCommercialTerms,d=a.items?.length?a.items:[];if(!d.length)return[{items:[],isFirst:!0,isLast:!0,pageNumber:1,totalPages:1}];let e=[],f=[],g=0,h=0,i=b(0,c);for(let a of d){let d=Math.max(1,Math.ceil(Math.max((a.description||"").trim().length,24)/180));f.length>0&&g+d>i&&(e.push(f),h+=1,f=[],g=0,i=b(h,c)),f.push(a),g+=d}return(f.length||!e.length)&&e.push(f),e.map((a,b)=>({items:a,isFirst:0===b,isLast:b===e.length-1,pageNumber:b+1,totalPages:e.length}))}a.s(["buildQuotationPageChunks",()=>c],24537);let d=["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce","quince","dieciséis","diecisiete","dieciocho","diecinueve","veinte","veintiuno","veintidós","veintitrés","veinticuatro","veinticinco","veintiséis","veintisiete","veintiocho","veintinueve"],e=["","","","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa"],f=["","ciento","doscientos","trescientos","cuatrocientos","quinientos","seiscientos","setecientos","ochocientos","novecientos"];function g(a){if(a<30)return d[a];if(a<100){let b=Math.floor(a/10),c=a%10;return c?`${e[b]} y ${d[c]}`:e[b]}if(100===a)return"cien";let b=Math.floor(a/100),c=a%100;return c?`${f[b]} ${g(c)}`:f[b]}function h(a,b){let c=Math.round(100*(Number.isFinite(a)?Math.max(0,a):0)),d=Math.floor(c/100),e="USD"===b?1===d?"dólar":"dólares":1===d?"sol":"soles",f=1===d?"un":(function a(b){if(b<1e3)return g(b);if(b<1e6){let c=Math.floor(b/1e3),d=b%1e3,e=1===c?"mil":`${a(c)} mil`;return d?`${e} ${g(d)}`:e}let c=Math.floor(b/1e6),d=b%1e6,e=1===c?"un millón":`${a(c)} millones`;return d?`${e} ${a(d)}`:e})(d).replace(/veintiuno$/,"veintiún").replace(/ y uno$/," y un").replace(/uno$/,"un");return`${f} con ${String(c%100).padStart(2,"0")}/100 ${e}`.toUpperCase()}a.s(["amountInWords",()=>h],96109)},51409,a=>{"use strict";var b=a.i(25503),c=a.i(24537),d=a.i(96109);function e(a){return String(a??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}function f(a,b="PEN"){return new Intl.NumberFormat("es-PE",{style:"currency",currency:b,maximumFractionDigits:2}).format(a??0)}function g(a){if(!a)return"-";if(/^\d{2}\/\d{2}\/\d{4}$/.test(a))return a;let b=a.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(b)return`${b[3]}/${b[2]}/${b[1]}`;let c=new Date(a);return Number.isNaN(c.getTime())?"-":`${String(c.getDate()).padStart(2,"0")}/${String(c.getMonth()+1).padStart(2,"0")}/${c.getFullYear()}`}async function h(a){return new Promise((b,c)=>{let d=new FileReader;d.onload=()=>b(String(d.result||"")),d.onerror=()=>c(Error("No se pudo convertir el logo a base64.")),d.readAsDataURL(a)})}async function i(a){let c=(0,b.normalizeAssetPath)(a);if(!c)return"";try{let a=await fetch(c.startsWith("http")?c:`${window.location.origin}${c}`);if(!a.ok)return"";return await h(await a.blob())}catch{return""}}function j(a,b){return`<div class="data-row"><strong>${e(a)}</strong><span>: ${e(b||"-")}</span></div>`}async function k(a,b){let h=await i(b?.logoAsset),k=b?.businessName||b?.name||"MT-Cotiza",l=(0,c.buildQuotationPageChunks)(a),m=!!a.items?.some(a=>!(a.noDiscount??a.discount<=0)),n=!!(a.destination||a.plate||a.serialNumber||a.guideNumber||a.codeReference||a.frameworkContract||a.frameworkContractPosition||a.technicalParameters),o=h?`<img src="${h}" alt="${e(k)}" />`:`<div class="logo-fallback">${e(b?.logoText||"MT")}</div>`;return`<!doctype html><html lang="es"><head><meta charset="utf-8" /><style>
+    @page{size:A4;margin:0}*{box-sizing:border-box}html,body{margin:0;background:#fff;color:#111827}body{font-family:Arial,Helvetica,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .page{width:210mm;min-height:297mm;padding:12mm 12mm 14mm;page-break-after:always}.page:last-child{page-break-after:auto}
+    header{display:grid;grid-template-columns:34mm 1fr 48mm;gap:4mm;align-items:start;border-bottom:2px solid #075985;padding-bottom:3mm}.logo{height:25mm;display:flex;align-items:center;justify-content:center}.logo img{max-height:25mm;max-width:34mm;object-fit:contain}.logo-fallback{font-size:22px;font-weight:800}.company-data{font-size:8px;line-height:1.45}.company-data h1{font-size:12px;margin:0 0 2mm;text-transform:uppercase}.quote-box{border:2px solid #b45309;border-radius:10px;padding:3mm;font-size:8px;line-height:1.5}.quote-label{font-size:8px;font-weight:800;letter-spacing:.12em}.quote-code{font-size:15px;font-weight:800;margin:1mm 0}
+    .document-header{margin-top:2mm;padding-bottom:2mm;border-bottom:1px solid #cbd5e1;font-size:8px;line-height:1.4}.section-title{margin-top:3mm;padding:1mm 0;border-top:2px solid #075985;border-bottom:2px solid #075985;font-size:8px;font-weight:800;letter-spacing:.1em}.data-grid,.operation-grid{display:grid;grid-template-columns:1fr 1fr;gap:1mm 5mm;margin-top:2mm;font-size:8px}.operation-grid{grid-template-columns:repeat(4,1fr);border-top:1px solid #94a3b8;border-bottom:1px solid #94a3b8;padding:2mm 0}.data-row{display:grid;grid-template-columns:28mm 1fr;gap:1mm;min-width:0}.data-row strong{font-size:7px}.data-row span{overflow-wrap:anywhere}.operation-grid .data-row{display:block}.operation-grid .data-row strong{display:block}.scope{margin-top:2mm;border:1px solid #cbd5e1;padding:2mm;font-size:8px;white-space:pre-wrap}
+    .table-wrap{margin-top:3mm;border:1px solid #111827}.table-wrap table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:8px}.table-wrap th{background:#d1d5db;padding:2mm 1mm;border-right:1px solid #111827;text-align:left}.table-wrap td{padding:2mm 1mm;border-top:1px solid #111827;border-right:1px solid #111827;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere}.table-wrap th:last-child,.table-wrap td:last-child{border-right:0}.center{text-align:center}.right{text-align:right}.strong{font-weight:700}.empty{text-align:center;color:#64748b;padding:5mm!important}
+    .amount-row{display:grid;grid-template-columns:1fr 48mm;border:1px solid #111827;border-top:0;font-size:8px}.amount-row>div{padding:2mm}.grand-total{display:flex;justify-content:space-between;border-left:1px solid #111827;font-size:10px}.tax-warning{margin-top:1mm;color:#dc2626;font-size:8px;font-weight:800}.summary-line{display:flex;justify-content:flex-end;gap:5mm;margin-top:1mm;font-size:8px;color:#475569}.terms-grid{display:grid;grid-template-columns:1fr 1fr;gap:5mm;border:1px solid #111827;margin-top:6mm;padding:4mm;font-size:7px;line-height:1.45;white-space:pre-wrap}.terms-grid h3{margin:0 0 2mm;text-align:center;color:#dc2626;font-size:8px}.signatures{display:grid;grid-template-columns:1fr 1fr;gap:25mm;margin-top:14mm;text-align:center;font-size:7px;font-weight:700}.signatures div{border-top:1px solid #111827;padding-top:2mm;text-transform:uppercase}
+  </style></head><body>${l.map(c=>{var h;let i=l.slice(0,c.pageNumber-1).reduce((a,b)=>a+b.items.length,0),p=c.isFirst?`<div class="section-title">DATOS DE EMPRESA</div>
+         <div class="data-grid">
+           ${j("RAZÓN SOCIAL",a.customerName)}
+           ${j("ATENCIÓN",a.attentionTo)}
+           ${j("DIRECCIÓN",a.customerAddress)}
+           ${j("REFERENCIA",a.reference||a.title)}
+           ${j(a.customerDocumentType||"RUC",a.customerDocumentNumber)}
+           ${j("TELÉFONO",a.customerPhone)}
+         </div>
+         ${a.description?`<div class="scope"><strong>ALCANCE:</strong> ${e(a.description)}</div>`:""}
+         ${n?`<div class="operation-grid">
+           ${j("DESTINO",a.destination)}
+           ${j("PLACA",a.plate)}
+           ${j("N.° SERIE",a.serialNumber)}
+           ${j("GUÍA N.°",a.guideNumber)}
+           ${j("CÓDIGO PROVEEDOR",a.codeReference)}
+           ${j("CONTRATO MARCO",a.frameworkContract)}
+           ${j("POSICIÓN",a.frameworkContractPosition)}
+           ${j("PARÁMETROS",a.technicalParameters)}
+         </div>`:""}`:"",q=c.isLast?`<div class="amount-row">
+           <div><strong>SON:</strong> ${e((0,d.amountInWords)(a.total,a.currency))}</div>
+           <div class="grand-total"><span>TOTAL</span><strong>${e(f(a.total,a.currency))}</strong></div>
+         </div>
+         ${a.includeTax?"":'<div class="tax-warning">PRECIO NO INCLUYE I.G.V.</div>'}
+         ${a.includeDiscount||a.includeTax?`<div class="summary-line">
+           <span>Subtotal: ${e(f(a.subtotal,a.currency))}</span>
+           ${a.includeDiscount?`<span>Descuento: ${e(f(a.discount,a.currency))}</span>`:""}
+           ${a.includeTax?`<span>Impuesto: ${e(f(a.tax,a.currency))}</span>`:""}
+         </div>`:""}
+         <div class="terms-grid">
+           <div><h3>T\xc9RMINOS Y CONDICIONES</h3><div>${e(a.hideCommercialTerms?"-":a.commercialTerms||"-")}</div></div>
+           <div><h3>CUENTA BANCARIA / DATOS DE PAGO</h3><div>${e(a.hideObservations?"-":a.observations||"-")}</div></div>
+         </div>
+         <div class="signatures"><div>${e(k)}</div><div>CLIENTE</div></div>`:"";return`<section class="page">
+      <header>
+        <div class="logo">${o}</div>
+        <div class="company-data">
+          <h1>${e(k)}</h1>
+          <div>RUC: ${e(a.logoText||b?.ruc||"-")}</div>
+          <div>${e(b?.address||"-")}</div>
+          <div>${e(a.reportLink||b?.phone||"-")}</div>
+          <div>${e(a.reportsEmail||b?.email||"-")}</div>
         </div>
-      `:"",D=b.isLast?`
-        <div class='sections'>
-          <div>
-            ${x?`<div class='card'><div class='box-title'>Observaciones</div><div class='box-value'>${d(a.observations||"-")}</div></div><div style='height:16px'></div>`:""}
-            ${y?`<div class='card'><div class='box-title'>Condiciones comerciales</div><div class='box-value'>${d(a.commercialTerms||"-")}</div></div>`:""}
-          </div>
-          <div class='totals'>
-            <div class='totals-row'><span>Subtotal</span><strong>${d(e(a.subtotal,a.currency))}</strong></div>
-            ${u?`<div class='totals-row'><span>Descuento</span><strong>${d(e(a.discount,a.currency))}</strong></div>`:""}
-            ${v?`<div class='totals-row'><span>Impuesto</span><strong>${d(e(a.tax,a.currency))}</strong></div>`:""}
-            <div class='totals-row total'><span>Total</span><strong>${d(e(a.total,a.currency))}</strong></div>
-          </div>
+        <div class="quote-box">
+          <div class="quote-label">${c.isFirst?"COTIZACIÓN N.°":`CONTINUACI\xd3N ${c.pageNumber}/${c.totalPages}`}</div>
+          <div class="quote-code">${e(a.code)}</div>
+          <div>Fecha: ${e(g(a.issueDate))}</div>
+          ${!1!==a.useExpirationDate&&a.expirationDate?`<div>Vence: ${e(g(a.expirationDate))}</div>`:""}
         </div>
-      `:"";return`
-      <div class='page'>
-        <div class='header'>
-          <div class='company'>
-            ${B}
-          </div>
-          <div class='badge'>
-            <div class='badge-title'>${h}</div>
-            <div class='badge-code'>${d(a.code)}</div>
-            <div class='badge-meta'>
-              <div>Fecha: ${d(f(a.issueDate))}</div>
-              ${!1!==a.useExpirationDate?`<div>Vence: ${d(f(a.expirationDate))}</div>`:""}
-            </div>
-          </div>
-        </div>
-        ${b.isFirst&&a.documentHeader?.trim()?`<div class='document-header'>${d(a.documentHeader).replace(/&lt;(\/?)(b|strong|u|ul|ol|li|div|p|br)&gt;/gi,"<$1$2>").replace(/&lt;font size=&quot;([235])&quot;&gt;/gi,'<font size="$1">').replace(/&lt;\/font&gt;/gi,"</font>")}</div>`:""}
-        <div class='company-meta'>
-          <span>RUC: ${s}</span>
-          <span>${t}</span>
-          <span>${p||n}</span>
-        </div>
-        <div class='info-strip'>
-          <div class='info-main'>
-            <div style='display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:10px;line-height:1.25;'>
-              <div style='font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#374151;'>${r}</div>
-              <div style='color:#6b7280;'>\xb7</div>
-              <div style='color:#374151;'>${p}</div>
-              <div style='color:#6b7280;'>\xb7</div>
-              <div style='color:#1d4ed8;text-decoration:underline;word-break:break-word;'>${q}</div>
-            </div>
-          </div>
-          <div class='info-box'>
-            <div style='font-size:13px;font-weight:700;color:#0f172a;line-height:1.2;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;'>${j}</div>
-            <div style='margin-top:8px;color:#475569;font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;'>
-              <div>RUC: ${k}</div>
-              <div>${l}</div>
-              <div>${m} \xb7 ${n}</div>
-            </div>
-          </div>
-        </div>
-        ${b.isFirst,`<div class='title-strip'>${A}</div>`}
-        ${C}
-        ${b.isFirst&&z?`<div style='margin-top:12px;border:1px solid #e2e8f0;border-radius:16px;padding:10px 12px;color:#475569;font-size:11px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;'>${d(`Placa: ${a.plate||"-"} \xb7 C\xf3digo: ${a.codeReference||"-"} \xb7 Contrato marco: ${a.frameworkContract||"-"} \xb7 Pos. contrato marco: ${a.frameworkContractPosition||"-"} \xb7 T1/T2/FLT: ${a.technicalParameters||"-"}`)}</div>`:""}
-        <div class='table-wrap'>
-          <table>
-            <thead>
-              <tr>
-                <th style='width:12%;'>Cant.</th>
-                <th>Descripci\xf3n</th>
-                <th style='width:18%; text-align:right;'>P. Unit.</th>
-                ${w?"<th style='width:16%; text-align:right;'>Desc.</th>":""}
-                <th style='text-align:right;width:${w?"18%":"28%"};'>Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${c={...a,items:b.items},g=c.items?.some(a=>!(a.noDiscount??a.discount<=0)),!c.items?.length?`
-      <tr>
-        <td colspan="${g?5:4}" style="padding:14px;border-top:1px solid #e2e8f0;color:#64748b;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">Sin \xedtems registrados</td>
-      </tr>
-    `:c.items.map(a=>`
-        <tr>
-          <td style="padding:12px 10px;border-top:1px solid #e2e8f0;vertical-align:top;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${d(String(a.quantity))}</td>
-          <td style="padding:12px 10px;border-top:1px solid #e2e8f0;vertical-align:top;font-weight:600;color:#0f172a;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${d(a.description)}</td>
-          <td style="padding:12px 10px;border-top:1px solid #e2e8f0;vertical-align:top;text-align:right;white-space:nowrap;">${d(e(a.unitPrice,c.currency))}</td>
-          ${g?`<td style="padding:12px 10px;border-top:1px solid #e2e8f0;vertical-align:top;text-align:right;white-space:nowrap;">${a.noDiscount?"-":d(e(a.discount,c.currency))}</td>`:""}
-          <td style="padding:12px 10px;border-top:1px solid #e2e8f0;vertical-align:top;text-align:right;font-weight:600;white-space:nowrap;">${d(e(a.subtotal,c.currency))}</td>
-        </tr>
-      `).join("")}
-            </tbody>
-          </table>
-        </div>
-        ${D}
-        ${b.isLast?`<div class='footer'><div>Sin otro particular, atentamente.</div><div class='footer-note'>${o}</div></div>`:""}
-      </div>
-    `}).join("")}
-</body>
-</html>`}async function k(a,b){throw Error("La descarga de PDF debe ejecutarse en el navegador.")}async function l(a,b){await k(a,b)}a.s(["buildQuotationPreviewHtml",()=>j,"downloadQuotationPdf",()=>l,"fetchQuotationPdfBlob",()=>k])},81554,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(14166),e=a.i(96221),f=a.i(92258),g=a.i(40695),h=a.i(5522),i=a.i(83196),j=a.i(65733),k=a.i(25503),l=a.i(51409);let m={greeting:"<p>Estimado/a cliente,</p><p>Adjuntamos la cotización para su revisión.</p>",followup:"<p>Quedamos atentos a sus comentarios o consultas adicionales.</p>",closing:"<p>Saludos cordiales,<br/>MT-Cotiza</p>"};function n({open:a,onOpenChange:n,quotation:p,onSent:q}){let[r,s]=(0,c.useState)(!1),[t,u]=(0,c.useState)(!1),[v,w]=(0,c.useState)(""),[x,y]=(0,c.useState)(""),[z,A]=(0,c.useState)(""),[B,C]=(0,c.useState)(""),[D,E]=(0,c.useState)(!1),[F,G]=(0,c.useState)(!1),[H,I]=(0,c.useState)(""),[J,K]=(0,c.useState)(null),[L,M]=(0,c.useState)(""),[N,O]=(0,c.useState)("application/pdf"),P=(0,c.useRef)(null),Q=(0,c.useMemo)(()=>p?`Cotizaci\xf3n ${p.code} - ${p.customerName}`:"",[p]),R=(0,c.useMemo)(()=>{let a;return p?(a=`Estimado/a ${p.customerName},
+      </header>
+      ${c.isFirst&&a.documentHeader?.trim()?`<div class="document-header">${e(a.documentHeader).replace(/&lt;(\/?)(b|strong|u|ul|ol|li|div|p|br)&gt;/gi,"<$1$2>").replace(/&lt;font size=&quot;([235])&quot;&gt;/gi,'<font size="$1">').replace(/&lt;\/font&gt;/gi,"</font>")}</div>`:""}
+      ${p}
+      <div class="table-wrap"><table><thead><tr>
+        <th style="width:7%">\xcdTEM</th><th style="width:13%">C\xd3DIGO</th><th>DESCRIPCI\xd3N</th>
+        <th style="width:9%">CANT.</th><th style="width:14%" class="right">P/UNITARIO</th>
+        ${m?'<th style="width:12%" class="right">DESC.</th>':""}
+        <th style="width:14%" class="right">IMPORTE</th>
+      </tr></thead><tbody>${h={...a,items:c.items},!h.items?.length?`<tr><td colspan="${m?7:6}" class="empty">Sin \xedtems registrados</td></tr>`:h.items.map((a,b)=>{let c=a.subtotal??a.quantity*a.unitPrice-(a.noDiscount?0:a.discount);return`<tr>
+        <td class="center">${i+b+1}</td>
+        <td>${e(a.code||"-")}</td>
+        <td>${e(a.description)}</td>
+        <td class="center">${e(String(a.quantity))}</td>
+        <td class="right">${e(f(a.unitPrice,h.currency))}</td>
+        ${m?`<td class="right">${a.noDiscount?"-":e(f(a.discount,h.currency))}</td>`:""}
+        <td class="right strong">${e(f(c,h.currency))}</td>
+      </tr>`}).join("")}</tbody></table></div>
+      ${q}
+    </section>`}).join("")}</body></html>`}async function l(a,b){throw Error("La descarga de PDF debe ejecutarse en el navegador.")}async function m(a,b){await l(a,b)}a.s(["buildQuotationPreviewHtml",()=>k,"downloadQuotationPdf",()=>m,"fetchQuotationPdfBlob",()=>l])},81554,a=>{"use strict";var b=a.i(87924),c=a.i(72131),d=a.i(14166),e=a.i(96221),f=a.i(92258),g=a.i(40695),h=a.i(5522),i=a.i(83196),j=a.i(65733),k=a.i(25503),l=a.i(51409);let m={greeting:"<p>Estimado/a cliente,</p><p>Adjuntamos la cotización para su revisión.</p>",followup:"<p>Quedamos atentos a sus comentarios o consultas adicionales.</p>",closing:"<p>Saludos cordiales,<br/>MT-Cotiza</p>"};function n({open:a,onOpenChange:n,quotation:p,onSent:q}){let[r,s]=(0,c.useState)(!1),[t,u]=(0,c.useState)(!1),[v,w]=(0,c.useState)(""),[x,y]=(0,c.useState)(""),[z,A]=(0,c.useState)(""),[B,C]=(0,c.useState)(""),[D,E]=(0,c.useState)(!1),[F,G]=(0,c.useState)(!1),[H,I]=(0,c.useState)(""),[J,K]=(0,c.useState)(null),[L,M]=(0,c.useState)(""),[N,O]=(0,c.useState)("application/pdf"),P=(0,c.useRef)(null),Q=(0,c.useMemo)(()=>p?`Cotizaci\xf3n ${p.code} - ${p.customerName}`:"",[p]),R=(0,c.useMemo)(()=>{let a;return p?(a=`Estimado/a ${p.customerName},
 
 Adjuntamos la cotizaci\xf3n ${p.code} para su revisi\xf3n.
 T\xedtulo: ${p.title}
