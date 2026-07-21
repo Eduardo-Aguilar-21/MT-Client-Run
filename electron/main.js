@@ -184,7 +184,7 @@ app.whenReady().then(async () => {
   }, 1000);
   const frontPort = readEnvValue('FRONTEND_PORT', '3000');
   const configuredHost = readEnvValue("FRONTEND_HOST", "127.0.0.1");
-  const appHost = configuredHost === 'localhost' ? '127.0.0.1' : configuredHost;
+  const appHost = configuredHost;
   const loginUrl = `http://${appHost}:${frontPort}/login`;
   const fallbackLoginUrl = appHost === '127.0.0.1' ? `http://localhost:${frontPort}/login` : `http://127.0.0.1:${frontPort}/login`;
   const loginUrls = [loginUrl, fallbackLoginUrl];
