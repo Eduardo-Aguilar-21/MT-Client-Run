@@ -69,6 +69,57 @@ function New-TreeClean([string]$Path) {
   New-Item -ItemType Directory -Path $Path | Out-Null
 }
 
+function New-JwtSecret {
+  $bytes = New-Object byte[] 32
+  $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+  try {
+    $rng.GetBytes($bytes)
+  } finally {
+    $rng.Dispose()
+  }
+  return [Convert]::ToBase64String($bytes)
+}
+
+function Ensure-JwtSecret {
+  $content = Get-Content -Path $envFile
+  $updated = @()
+  $found = $false
+  $changed = $false
+
+  foreach ($line in $content) {
+    if ($line -match '^\s*JWT_SECRET_KEY\s*=\s*(.*)\s*$') {
+      $found = $true
+      $value = $matches[1].Trim()
+      $valid = $false
+      try {
+        $decoded = [Convert]::FromBase64String($value)
+        $valid = ($decoded.Length -ge 32)
+      } catch {
+        $valid = $false
+      }
+
+      if (-not $valid) {
+        $updated += "JWT_SECRET_KEY=$(New-JwtSecret)"
+        $changed = $true
+      } else {
+        $updated += $line
+      }
+    } else {
+      $updated += $line
+    }
+  }
+
+  if (-not $found) {
+    $updated += "JWT_SECRET_KEY=$(New-JwtSecret)"
+    $changed = $true
+  }
+
+  if ($changed) {
+    Set-Content -Path $envFile -Value $updated -Encoding UTF8
+    Write-Host "Se genero una clave JWT local segura para MT Cotiza."
+  }
+}
+
 function Ensure-EnvFile {
   if (-not (Test-Path -Path $envExampleFile)) {
     throw "No existe .env ni .env.example en $runRoot. Crea .env antes de iniciar."
@@ -130,10 +181,12 @@ function Ensure-EnvFile {
       Set-Content -Path $envFile -Value $updatedEnvContent -Encoding UTF8
       Write-Host "Se migro POSTGRES_PASSWORD al valor administrado por MT Cotiza."
     }
+    Ensure-JwtSecret
     return
   }
   Copy-Item -Path $envExampleFile -Destination $envFile -Force
-  Write-Host "Se creo .env desde .env.example. Revisa credenciales y secrets antes de produccion."
+  Ensure-JwtSecret
+  Write-Host "Se creo .env desde .env.example con una clave JWT local segura."
 }
 
 function Get-EnvValue([string]$Key, [string]$Default = "") {
