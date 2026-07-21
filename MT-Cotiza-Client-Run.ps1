@@ -724,7 +724,7 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
     $servers.ApiJar
   )
   $apiArgumentText = (($apiArgs | ForEach-Object { ConvertTo-WindowsCommandLineArgument $_ }) -join " ")
-  $apiProc = Start-Process -FilePath $javaExe -ArgumentList $apiArgumentText -WorkingDirectory $apiBuild -RedirectStandardOutput $apiOutLog -RedirectStandardError $apiErrLog -PassThru -WindowStyle Minimized
+  $apiProc = Start-Process -FilePath $javaExe -ArgumentList $apiArgumentText -WorkingDirectory $apiBuild -RedirectStandardOutput $apiOutLog -RedirectStandardError $apiErrLog -PassThru -WindowStyle Hidden
   Write-Host "   - API iniciada (PID $($apiProc.Id))"
 
   $apiReadyUrl = "http://127.0.0.1:$ApiPort/api/auth/me"
@@ -754,7 +754,7 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   }
   Write-Host "   - API lista en http://127.0.0.1:$ApiPort."
 
-  $frontProc = Start-Process -FilePath $nodeExe -ArgumentList "server.js" -WorkingDirectory $frontBuild -RedirectStandardOutput $frontOutLog -RedirectStandardError $frontErrLog -PassThru -WindowStyle Minimized
+  $frontProc = Start-Process -FilePath $nodeExe -ArgumentList "server.js" -WorkingDirectory $frontBuild -RedirectStandardOutput $frontOutLog -RedirectStandardError $frontErrLog -PassThru -WindowStyle Hidden
   Write-Host "   - Front iniciado (PID $($frontProc.Id))"
 
   $pidState = @{
