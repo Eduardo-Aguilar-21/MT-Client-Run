@@ -263,11 +263,14 @@ function Invoke-PortablePostgresOutput([string]$ExeName, [string[]]$PgArgs, [int
     Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
     return @{ ExitCode = 124; Output = ""; Error = "timeout"; }
   }
+  $proc.WaitForExit()
+  $proc.Refresh()
+  $exitCode = $proc.ExitCode
   $output = ""
   $errorOutput = ""
   if (Test-Path -Path $outFile) { $output = Get-Content -Path $outFile -Raw -ErrorAction SilentlyContinue }
   if (Test-Path -Path $errFile) { $errorOutput = Get-Content -Path $errFile -Raw -ErrorAction SilentlyContinue }
-  return @{ ExitCode = $proc.ExitCode; Output = $output; Error = $errorOutput; }
+  return @{ ExitCode = $exitCode; Output = $output; Error = $errorOutput; }
 }
 
 function Wait-PortableAppDatabase([string]$Port, [string]$DbName, [string]$DbUser, [string]$DbPassword, [int]$TimeoutSeconds = 120) {
