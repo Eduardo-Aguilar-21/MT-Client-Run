@@ -60,6 +60,44 @@ begin
   Result := Exec(ExpandConstant('{cmd}'), '/c sc query state= all | findstr /I "postgresql postgres"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
 end;
 
+function MTCotizaServiceExists(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result := Exec(ExpandConstant('{cmd}'), '/c sc query MTCotizaPostgres >nul 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+end;
+
+function MTCotizaServiceStopped(): Boolean;
+var
+  ResultCode: Integer;
+begin
+  if not MTCotizaServiceExists() then begin
+    Result := True;
+    exit;
+  end;
+
+  Result := Exec(ExpandConstant('{cmd}'), '/c sc query MTCotizaPostgres | findstr /I "STOPPED" >nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) and (ResultCode = 0);
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  I: Integer;
+  ResultCode: Integer;
+begin
+  Result := '';
+  if not MTCotizaServiceExists() then
+    exit;
+
+  Exec(ExpandConstant('{cmd}'), '/c sc stop MTCotizaPostgres >nul 2>nul', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+  for I := 1 to 40 do begin
+    if MTCotizaServiceStopped() then
+      exit;
+    Sleep(500);
+  end;
+
+  Result := 'No se pudo detener el servicio MTCotizaPostgres. Reinicia Windows y vuelve a ejecutar el instalador.';
+end;
+
 procedure InitializeWizard();
 begin
   PgInfoPage := CreateCustomPage(
