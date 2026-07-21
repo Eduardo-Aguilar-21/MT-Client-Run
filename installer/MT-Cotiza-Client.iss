@@ -24,6 +24,7 @@ CloseApplications=yes
 RestartApplications=no
 
 [Files]
+Source: "stop-client-processes.ps1"; Flags: dontcopy
 Source: "..\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: ".git\*,.env,data\*,backups\*,installer\output\*,runtime\_downloads\*,*.tmp,*.log,*.out.log,*.err.log,standalone.pids.json"
 
 [Icons]
@@ -86,6 +87,20 @@ var
   ResultCode: Integer;
 begin
   Result := '';
+
+  ExtractTemporaryFile('stop-client-processes.ps1');
+  if not Exec(
+    ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+    '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\stop-client-processes.ps1') + '" -InstallRoot "' + ExpandConstant('{app}') + '"',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  ) or (ResultCode <> 0) then begin
+    Result := 'No se pudieron detener los procesos anteriores de MT Cotiza. Cierra la aplicacion y vuelve a intentar.';
+    exit;
+  end;
+
   if not MTCotizaServiceExists() then
     exit;
 
