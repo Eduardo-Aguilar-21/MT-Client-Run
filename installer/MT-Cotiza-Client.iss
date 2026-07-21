@@ -1,5 +1,5 @@
 #define MyAppName "MT Cotiza Client"
-#define MyAppVersion "0.1.4"
+#define MyAppVersion "0.1.5"
 #define MyAppPublisher "MT Cotiza"
 #define MyAppExeName "electron.exe"
 #define MyAppId "{{7A45B986-1A83-49B1-9A8A-7C0A36A53A60}}"
@@ -19,8 +19,8 @@ OutputBaseFilename=MT-Cotiza-Client-Setup-{#MyAppVersion}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-SetupIconFile=..\electron\assets\app-icon.ico
-UninstallDisplayIcon={app}\electron\assets\app-icon.ico
+SetupIconFile=..\electron\assets\run-app-icon.ico
+UninstallDisplayIcon={app}\electron\assets\run-app-icon.ico
 CloseApplications=yes
 RestartApplications=no
 
@@ -35,8 +35,8 @@ Type: files; Name: "{userdesktop}\MT-Cotiza.lnk"
 Type: files; Name: "{commondesktop}\MT-Cotiza.lnk"
 
 [Icons]
-Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\electron\dist\electron.exe"; Parameters: """{app}\electron"""; WorkingDir: "{app}"; IconFilename: "{app}\electron\assets\app-icon.ico"; AppUserModelID: "com.mtcotiza.client"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\electron\dist\electron.exe"; Parameters: """{app}\electron"""; WorkingDir: "{app}"; IconFilename: "{app}\electron\assets\app-icon.ico"; AppUserModelID: "com.mtcotiza.client"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\electron\dist\electron.exe"; Parameters: """{app}\electron"""; WorkingDir: "{app}"; IconFilename: "{app}\electron\assets\run-app-icon.ico"; AppUserModelID: "com.mtcotiza.client"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\electron\dist\electron.exe"; Parameters: """{app}\electron"""; WorkingDir: "{app}"; IconFilename: "{app}\electron\assets\run-app-icon.ico"; AppUserModelID: "com.mtcotiza.client"; Tasks: desktopicon
 
 [Tasks]
 Name: "desktopicon"; Description: "Crear acceso directo en el escritorio"; GroupDescription: "Accesos directos:"; Flags: checkedonce

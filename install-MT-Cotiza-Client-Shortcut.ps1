@@ -10,7 +10,7 @@ if (-not (Test-Path -Path $electronExe)) {
 
 $desktop = [Environment]::GetFolderPath("Desktop")
 $shortcutPath = Join-Path $desktop "MT Cotiza Client.lnk"
-$iconPath = Join-Path $runRoot "electron\assets\app-icon.ico"
+$iconPath = Join-Path $runRoot "electron\assets\run-app-icon.ico"
 
 $shell = New-Object -ComObject WScript.Shell
 $shortcut = $shell.CreateShortcut($shortcutPath)
