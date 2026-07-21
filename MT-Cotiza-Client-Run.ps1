@@ -269,6 +269,26 @@ function Wait-PortableAppDatabase([string]$Port, [string]$DbName, [string]$DbUse
   throw "PostgreSQL esta iniciado, pero la app no puede conectar como $DbUser a $DbName. Revisa data\logs\postgres.err.log y data\logs\pg-command.err.tmp."
 }
 
+function Repair-PortableAppDatabase([string]$Port, [string]$DbName, [string]$DbUser, [string]$DbPassword) {
+  Write-Host "   - Reparando rol/base de datos de aplicacion..."
+  [Environment]::SetEnvironmentVariable("PGCONNECT_TIMEOUT", "3", "Process")
+  [Environment]::SetEnvironmentVariable("PGSSLMODE", "disable", "Process")
+  $adminUser = "postgres"
+  $adminCheck = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1") -TimeoutSeconds 5
+  if ($adminCheck.ExitCode -ne 0 -or (($adminCheck.Output -join "").Trim()) -ne "1") {
+    throw "PostgreSQL responde, pero no permite reparar con usuario postgres. Revisa data\logs\pg-command.err.tmp."
+  }
+  $escapedUser = $DbUser.Replace("'", "''")
+  $escapedPassword = $DbPassword.Replace("'", "''")
+  $roleExists = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'") -TimeoutSeconds 5
+  if (($roleExists.Output -join "").Trim() -eq "1") {
+    Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-c", "ALTER ROLE `"$escapedUser`" WITH PASSWORD '$escapedPassword'") -IgnoreFailure $false | Out-Null
+  } else {
+    Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-c", "CREATE ROLE `"$escapedUser`" LOGIN PASSWORD '$escapedPassword'") -IgnoreFailure $false | Out-Null
+  }
+  Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-O", $DbUser, $DbName) -IgnoreFailure $true -Quiet $true | Out-Null
+}
+
 function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser, [string]$DbPassword) {
   Write-Host "[4/6] Base de datos local Run: iniciando PostgreSQL portable..."
   $pgData = Join-Path $dataRoot "db"
@@ -284,7 +304,12 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
       Start-Sleep -Seconds 1
     }
     if (-not $serviceReady) { throw "El servicio $serviceName no respondio en 127.0.0.1:$Port." }
-    Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser
+    try {
+      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -TimeoutSeconds 8
+    } catch {
+      Repair-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -DbPassword $DbPassword
+      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -TimeoutSeconds 20
+    }
     Write-Host "   - PostgreSQL servicio listo en 127.0.0.1:$Port, datos en $pgData."
     return 0
   }
@@ -311,7 +336,12 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   & (Resolve-PortablePostgresExecutable "pg_isready.exe") @("-h", "127.0.0.1", "-p", $Port) >$null 2>$null
   if ($LASTEXITCODE -eq 0) {
     Write-Host "   - PostgreSQL portable ya estaba listo en 127.0.0.1:$Port."
-    Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser
+    try {
+      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -TimeoutSeconds 8
+    } catch {
+      Repair-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -DbPassword $DbPassword
+      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -TimeoutSeconds 20
+    }
     return 0
   }
 

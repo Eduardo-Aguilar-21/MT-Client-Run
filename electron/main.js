@@ -104,7 +104,9 @@ function getLastRunLogLine() {
     .filter((line) => !line.includes('FullyQualifiedErrorId'))
     .filter((line) => !line.includes('RuntimeException'))
     .filter((line) => !line.includes('OperationStopped'))
-    .filter((line) => !line.toLowerCase().startsWith('revisa '));
+    .filter((line) => !line.toLowerCase().startsWith('revisa '))
+    .filter((line) => !line.toLowerCase().includes('data\\logs'))
+    .filter((line) => !line.toLowerCase().includes('pg-command.err.tmp'));
   return lines.length ? lines[lines.length - 1].slice(0, 180) : 'Preparando arranque...';
 }
 
