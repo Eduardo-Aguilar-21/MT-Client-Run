@@ -663,6 +663,60 @@ function Get-StandaloneServer {
   }
 }
 
+function Start-NoWindowLoggedProcess([string]$FilePath, [string]$Arguments, [string]$WorkingDirectory, [string]$StandardOutputPath, [string]$StandardErrorPath) {
+  $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+  $startInfo.FileName = $FilePath
+  $startInfo.Arguments = $Arguments
+  $startInfo.WorkingDirectory = $WorkingDirectory
+  $startInfo.UseShellExecute = $false
+  $startInfo.CreateNoWindow = $true
+  $startInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden
+  $startInfo.RedirectStandardOutput = $true
+  $startInfo.RedirectStandardError = $true
+
+  $outStream = [System.IO.File]::Open($StandardOutputPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
+  $errStream = [System.IO.File]::Open($StandardErrorPath, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
+  $process = New-Object System.Diagnostics.Process
+  $process.StartInfo = $startInfo
+
+  try {
+    if (-not $process.Start()) {
+      throw "No se pudo iniciar $FilePath."
+    }
+    $outCopy = $process.StandardOutput.BaseStream.CopyToAsync($outStream)
+    $errCopy = $process.StandardError.BaseStream.CopyToAsync($errStream)
+  } catch {
+    $outStream.Dispose()
+    $errStream.Dispose()
+    $process.Dispose()
+    throw
+  }
+
+  return [pscustomobject]@{
+    Process = $process
+    OutputCopy = $outCopy
+    ErrorCopy = $errCopy
+    OutputStream = $outStream
+    ErrorStream = $errStream
+  }
+}
+
+function Stop-NoWindowLoggedProcess($ManagedProcess) {
+  if (-not $ManagedProcess) { return }
+  try {
+    if (-not $ManagedProcess.Process.HasExited) {
+      Stop-Process -Id $ManagedProcess.Process.Id -Force -ErrorAction SilentlyContinue
+    }
+    [void]$ManagedProcess.Process.WaitForExit(5000)
+    try { [void]$ManagedProcess.OutputCopy.Wait(5000) } catch {}
+    try { [void]$ManagedProcess.ErrorCopy.Wait(5000) } catch {}
+  } finally {
+    $ManagedProcess.OutputStream.Dispose()
+    $ManagedProcess.ErrorStream.Dispose()
+    $ManagedProcess.Process.Dispose()
+  }
+}
+
 function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfile, [string]$ApiPort, [string]$DbUrl, [string]$DbUser, [string]$DbPassword, [int]$PostgresPid = 0) {
   $javaExe = Resolve-Executable "java" $javaCandidatePaths
   $nodeExe = Resolve-Executable "node" $nodeCandidatePaths
@@ -724,13 +778,13 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
     $servers.ApiJar
   )
   $apiArgumentText = (($apiArgs | ForEach-Object { ConvertTo-WindowsCommandLineArgument $_ }) -join " ")
-  $apiProc = Start-Process -FilePath $javaExe -ArgumentList $apiArgumentText -WorkingDirectory $apiBuild -RedirectStandardOutput $apiOutLog -RedirectStandardError $apiErrLog -PassThru -WindowStyle Hidden
-  Write-Host "   - API iniciada (PID $($apiProc.Id))"
+  $apiProc = Start-NoWindowLoggedProcess -FilePath $javaExe -Arguments $apiArgumentText -WorkingDirectory $apiBuild -StandardOutputPath $apiOutLog -StandardErrorPath $apiErrLog
+  Write-Host "   - API iniciada sin ventana (PID $($apiProc.Process.Id))"
 
   $apiReadyUrl = "http://127.0.0.1:$ApiPort/api/auth/me"
   $apiReady = $false
   for ($i = 0; $i -lt 120; $i++) {
-    if ($apiProc.HasExited) {
+    if ($apiProc.Process.HasExited) {
       throw "La API termino antes de quedar lista. Revisa data\logs\api.out.log."
     }
     try {
@@ -754,13 +808,13 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   }
   Write-Host "   - API lista en http://127.0.0.1:$ApiPort."
 
-  $frontProc = Start-Process -FilePath $nodeExe -ArgumentList "server.js" -WorkingDirectory $frontBuild -RedirectStandardOutput $frontOutLog -RedirectStandardError $frontErrLog -PassThru -WindowStyle Hidden
-  Write-Host "   - Front iniciado (PID $($frontProc.Id))"
+  $frontProc = Start-NoWindowLoggedProcess -FilePath $nodeExe -Arguments "server.js" -WorkingDirectory $frontBuild -StandardOutputPath $frontOutLog -StandardErrorPath $frontErrLog
+  Write-Host "   - Front iniciado sin ventana (PID $($frontProc.Process.Id))"
 
   $pidState = @{
     mode = "standalone"
-    api = $apiProc.Id
-    front = $frontProc.Id
+    api = $apiProc.Process.Id
+    front = $frontProc.Process.Id
     started = (Get-Date).ToString("o")
   }
   if ($PostgresPid -gt 0) { $pidState.postgres = $PostgresPid }
@@ -780,8 +834,8 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   }
   if ($BootstrapOnly) {
     Write-Host "Bootstrap completo: API y Front respondieron. Cerrando servicios temporales..."
-    Stop-Process -Id $frontProc.Id -Force -ErrorAction SilentlyContinue
-    Stop-Process -Id $apiProc.Id -Force -ErrorAction SilentlyContinue
+    Stop-NoWindowLoggedProcess $frontProc
+    Stop-NoWindowLoggedProcess $apiProc
     if ($PostgresPid -gt 0) {
       $pgData = Join-Path $dataRoot "db"
       $pgCtl = Join-Path $portablePostgresBin "pg_ctl.exe"
@@ -801,6 +855,18 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   Write-Host "Logs API: $apiOutLog | $apiErrLog"
   Write-Host "Logs Front: $frontOutLog | $frontErrLog"
   Write-Host "Nota: la base de datos debe estar disponible por URL definida en .env."
+
+  try {
+    while (-not $apiProc.Process.HasExited -and -not $frontProc.Process.HasExited) {
+      Start-Sleep -Seconds 2
+    }
+  } finally {
+    Stop-NoWindowLoggedProcess $frontProc
+    Stop-NoWindowLoggedProcess $apiProc
+    if (Test-Path -Path $pidFile) {
+      Remove-Item -Path $pidFile -Force -ErrorAction SilentlyContinue
+    }
+  }
 }
 
 function Start-RunPostgres {
