@@ -284,7 +284,7 @@ function Wait-PortableAppDatabase([string]$Port, [string]$DbName, [string]$DbUse
       $check = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-w", "-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, "-d", $DbName, "-tAc", "SELECT 1") -TimeoutSeconds 5
       $checkOutput = ""
       if ($null -ne $check.Output) { $checkOutput = $check.Output.Trim() }
-      if ($check.ExitCode -eq 0 -and $checkOutput -eq "1") {
+      if ($checkOutput -eq "1") {
         Write-Host "   - DB de aplicacion lista para $DbUser@$DbName."
         return
       }
@@ -305,7 +305,7 @@ function Repair-PortableAppDatabase([string]$Port, [string]$DbName, [string]$DbU
   [Environment]::SetEnvironmentVariable("PGPASSWORD", $null, "Process")
   $adminUser = "postgres"
   $adminCheck = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-w", "-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1") -TimeoutSeconds 5
-  if ($adminCheck.ExitCode -ne 0 -or (($adminCheck.Output -join "").Trim()) -ne "1") {
+  if (([string]$adminCheck.Output).Trim() -ne "1") {
     throw "PostgreSQL responde, pero no permite reparar con usuario postgres. Revisa data\logs\pg-command.err.tmp."
   }
   $escapedUser = $DbUser.Replace("'", "''")
@@ -415,7 +415,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   $adminReady = $false
   for ($i = 0; $i -lt 10; $i++) {
     $adminCheck = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1")
-    if ($adminCheck.ExitCode -eq 0 -and (($adminCheck.Output -join "").Trim()) -eq "1") {
+    if (([string]$adminCheck.Output).Trim() -eq "1") {
       $adminReady = $true
       break
     }
