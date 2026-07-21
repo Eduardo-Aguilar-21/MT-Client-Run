@@ -2,23 +2,23 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $runRoot = $PSScriptRoot
-$launcher = Join-Path $runRoot "start-MT-Cotiza-Client-Electron.bat"
-if (-not (Test-Path -Path $launcher)) {
-  throw "No existe launcher: $launcher"
+$electronExe = Join-Path $runRoot "electron\dist\electron.exe"
+$electronApp = Join-Path $runRoot "electron"
+if (-not (Test-Path -Path $electronExe)) {
+  throw "No existe Electron: $electronExe"
 }
 
 $desktop = [Environment]::GetFolderPath("Desktop")
 $shortcutPath = Join-Path $desktop "MT Cotiza Client.lnk"
-$iconPath = Join-Path $runRoot "electron\assets\run-logo.png"
+$iconPath = Join-Path $runRoot "electron\assets\app-icon.ico"
 
 $shell = New-Object -ComObject WScript.Shell
 $shortcut = $shell.CreateShortcut($shortcutPath)
-$shortcut.TargetPath = $launcher
+$shortcut.TargetPath = $electronExe
+$shortcut.Arguments = '"' + $electronApp + '"'
 $shortcut.WorkingDirectory = $runRoot
-$shortcut.Description = "MT Cotiza Client"
-if (Test-Path -Path (Join-Path $runRoot "electron\dist\electron.exe")) {
-  $shortcut.IconLocation = (Join-Path $runRoot "electron\dist\electron.exe")
-}
+$shortcut.Description = "MT Cotiza Client (Escritorio)"
+$shortcut.IconLocation = $iconPath + ",0"
 $shortcut.Save()
 
 Write-Host "Acceso directo creado: $shortcutPath"

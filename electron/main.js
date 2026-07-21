@@ -11,6 +11,8 @@ process.env.MT_COTIZA_DATA_ROOT = dataRoot;
 const logsDir = path.join(dataRoot, 'logs');
 const runLog = path.join(logsDir, 'electron-run.log');
 const electronProfileDir = path.join(dataRoot, 'electron-profile');
+const appIcon = path.join(__dirname, 'assets', 'app-icon.png');
+const appUserModelId = 'com.mtcotiza.client';
 let runner = null;
 let mainWindow = null;
 
@@ -19,6 +21,7 @@ if (!hasSingleInstanceLock) {
   app.quit();
 }
 
+app.setAppUserModelId(appUserModelId);
 app.setPath('userData', electronProfileDir);
 
 function readEnvValue(key, fallback) {
@@ -129,6 +132,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 680,
     title: 'MT Cotiza Client',
+    icon: appIcon,
     autoHideMenuBar: true,
     backgroundColor: '#f5f1e8',
     webPreferences: {
