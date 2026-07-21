@@ -669,7 +669,8 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
     "-jar",
     $servers.ApiJar
   )
-  $apiProc = Start-Process -FilePath $javaExe -ArgumentList $apiArgs -WorkingDirectory $apiBuild -RedirectStandardOutput $apiOutLog -RedirectStandardError $apiErrLog -PassThru -WindowStyle Minimized
+  $apiArgumentText = (($apiArgs | ForEach-Object { ConvertTo-WindowsCommandLineArgument $_ }) -join " ")
+  $apiProc = Start-Process -FilePath $javaExe -ArgumentList $apiArgumentText -WorkingDirectory $apiBuild -RedirectStandardOutput $apiOutLog -RedirectStandardError $apiErrLog -PassThru -WindowStyle Minimized
   Write-Host "   - API iniciada (PID $($apiProc.Id))"
 
   $apiReadyUrl = "http://127.0.0.1:$ApiPort/api/auth/me"
