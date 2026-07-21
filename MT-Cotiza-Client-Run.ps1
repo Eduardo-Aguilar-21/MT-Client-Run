@@ -1,10 +1,16 @@
 param(
   [switch]$NoBrowser,
-  [switch]$BootstrapOnly
+  [switch]$BootstrapOnly,
+  [switch]$KeepServicesRunning
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+trap {
+  Write-Host ("ERROR: " + $_.Exception.Message)
+  exit 1
+}
 
 $runRoot = $PSScriptRoot
 $repoRoot = Split-Path -Path $runRoot -Parent
@@ -23,6 +29,11 @@ $apiBuild = Join-Path $buildRoot "api"
 $frontBuild = Join-Path $buildRoot "front"
 $pidFile = Join-Path $runRoot "standalone.pids.json"
 $portablePostgresBin = Join-Path $runRoot "runtime\postgres\bin"
+$script:StartupMutex = New-Object System.Threading.Mutex($false, "Local\MTCotizaClientServices")
+if (-not $script:StartupMutex.WaitOne(0)) {
+  Write-Host "Otro arranque de servicios MT Cotiza ya esta en curso."
+  exit 0
+}
 
 $javaCandidatePaths = @(
   (Join-Path $runRoot "runtime\java\bin\java.exe"),
@@ -234,12 +245,20 @@ function Invoke-PortablePostgres([string]$ExeName, [string[]]$PgArgs = @(), [boo
 }
 
 
+function ConvertTo-WindowsCommandLineArgument([string]$Value) {
+  if ($null -eq $Value -or $Value.Length -eq 0) { return '""' }
+  $escaped = $Value -replace '(\\*)"', '$1$1\"'
+  $escaped = $escaped -replace '(\\+)$', '$1$1'
+  return '"' + $escaped + '"'
+}
+
 function Invoke-PortablePostgresOutput([string]$ExeName, [string[]]$PgArgs, [int]$TimeoutSeconds = 8) {
   $exe = Resolve-PortablePostgresExecutable $ExeName
   $outFile = Join-Path $dataRoot "logs\pg-command.out.tmp"
   $errFile = Join-Path $dataRoot "logs\pg-command.err.tmp"
   Remove-Item -Path $outFile, $errFile -Force -ErrorAction SilentlyContinue
-  $proc = Start-Process -FilePath $exe -ArgumentList $PgArgs -WorkingDirectory $portablePostgresBin -RedirectStandardOutput $outFile -RedirectStandardError $errFile -PassThru -WindowStyle Hidden
+  $argumentText = (($PgArgs | ForEach-Object { ConvertTo-WindowsCommandLineArgument $_ }) -join " ")
+  $proc = Start-Process -FilePath $exe -ArgumentList $argumentText -WorkingDirectory $portablePostgresBin -RedirectStandardOutput $outFile -RedirectStandardError $errFile -PassThru -WindowStyle Hidden
   if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) {
     Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
     return @{ ExitCode = 124; Output = ""; Error = "timeout"; }
@@ -251,42 +270,52 @@ function Invoke-PortablePostgresOutput([string]$ExeName, [string[]]$PgArgs, [int
   return @{ ExitCode = $proc.ExitCode; Output = $output; Error = $errorOutput; }
 }
 
-function Wait-PortableAppDatabase([string]$Port, [string]$DbName, [string]$DbUser, [int]$TimeoutSeconds = 120) {
+function Wait-PortableAppDatabase([string]$Port, [string]$DbName, [string]$DbUser, [string]$DbPassword, [int]$TimeoutSeconds = 120) {
   Write-Host "   - Verificando conexion de aplicacion a PostgreSQL..."
   [Environment]::SetEnvironmentVariable("PGCONNECT_TIMEOUT", "3", "Process")
   [Environment]::SetEnvironmentVariable("PGSSLMODE", "disable", "Process")
+  [Environment]::SetEnvironmentVariable("PGPASSWORD", $DbPassword, "Process")
   $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
-  while ((Get-Date) -lt $deadline) {
-    $check = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, "-d", $DbName, "-tAc", "SELECT 1") -TimeoutSeconds 5
-    $checkOutput = ""
-    if ($null -ne $check.Output) { $checkOutput = $check.Output.Trim() }
-    if ($check.ExitCode -eq 0 -and $checkOutput -eq "1") {
-      Write-Host "   - DB de aplicacion lista para $DbUser@$DbName."
-      return
+  try {
+    while ((Get-Date) -lt $deadline) {
+      $check = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-w", "-h", "127.0.0.1", "-p", $Port, "-U", $DbUser, "-d", $DbName, "-tAc", "SELECT 1") -TimeoutSeconds 5
+      $checkOutput = ""
+      if ($null -ne $check.Output) { $checkOutput = $check.Output.Trim() }
+      if ($check.ExitCode -eq 0 -and $checkOutput -eq "1") {
+        Write-Host "   - DB de aplicacion lista para $DbUser@$DbName."
+        return
+      }
+      Start-Sleep -Seconds 2
     }
-    Start-Sleep -Seconds 2
+  } finally {
+    [Environment]::SetEnvironmentVariable("PGPASSWORD", $null, "Process")
   }
-  throw "PostgreSQL esta iniciado, pero la app no puede conectar como $DbUser a $DbName. Revisa data\logs\postgres.err.log y data\logs\pg-command.err.tmp."
+  throw "PostgreSQL esta iniciado, pero la app no puede conectar como $DbUser a $DbName. Revisa $dataRoot\logs\pg-command.err.tmp."
 }
 
 function Repair-PortableAppDatabase([string]$Port, [string]$DbName, [string]$DbUser, [string]$DbPassword) {
   Write-Host "   - Reparando rol/base de datos de aplicacion..."
+  if ($DbUser -notmatch '^[A-Za-z_][A-Za-z0-9_]*$') { throw "POSTGRES_USER contiene caracteres no admitidos: $DbUser" }
+  if ($DbName -notmatch '^[A-Za-z_][A-Za-z0-9_]*$') { throw "POSTGRES_DB contiene caracteres no admitidos: $DbName" }
   [Environment]::SetEnvironmentVariable("PGCONNECT_TIMEOUT", "3", "Process")
   [Environment]::SetEnvironmentVariable("PGSSLMODE", "disable", "Process")
+  [Environment]::SetEnvironmentVariable("PGPASSWORD", $null, "Process")
   $adminUser = "postgres"
-  $adminCheck = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1") -TimeoutSeconds 5
+  $adminCheck = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-w", "-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1") -TimeoutSeconds 5
   if ($adminCheck.ExitCode -ne 0 -or (($adminCheck.Output -join "").Trim()) -ne "1") {
     throw "PostgreSQL responde, pero no permite reparar con usuario postgres. Revisa data\logs\pg-command.err.tmp."
   }
   $escapedUser = $DbUser.Replace("'", "''")
   $escapedPassword = $DbPassword.Replace("'", "''")
-  $roleExists = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'") -TimeoutSeconds 5
+  $roleExists = Invoke-PortablePostgresOutput -ExeName "psql.exe" -PgArgs @("-w", "-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-tAc", "SELECT 1 FROM pg_roles WHERE rolname = '$escapedUser'") -TimeoutSeconds 5
   if (($roleExists.Output -join "").Trim() -eq "1") {
     Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-c", "ALTER ROLE `"$escapedUser`" WITH PASSWORD '$escapedPassword'") -IgnoreFailure $false | Out-Null
   } else {
     Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-c", "CREATE ROLE `"$escapedUser`" LOGIN PASSWORD '$escapedPassword'") -IgnoreFailure $false | Out-Null
   }
   Invoke-PortablePostgres -ExeName "createdb.exe" -PgArgs @("-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-O", $DbUser, $DbName) -IgnoreFailure $true -Quiet $true | Out-Null
+  Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-w", "-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", "postgres", "-c", "ALTER DATABASE `"$DbName`" OWNER TO `"$DbUser`"") -IgnoreFailure $false -Quiet $true | Out-Null
+  Invoke-PortablePostgres -ExeName "psql.exe" -PgArgs @("-w", "-h", "127.0.0.1", "-p", $Port, "-U", $adminUser, "-d", $DbName, "-c", "ALTER SCHEMA public OWNER TO `"$DbUser`"; GRANT ALL ON SCHEMA public TO `"$DbUser`";") -IgnoreFailure $false -Quiet $true | Out-Null
 }
 
 function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser, [string]$DbPassword) {
@@ -305,10 +334,10 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
     }
     if (-not $serviceReady) { throw "El servicio $serviceName no respondio en 127.0.0.1:$Port." }
     try {
-      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -TimeoutSeconds 8
+      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -DbPassword $DbPassword -TimeoutSeconds 8
     } catch {
       Repair-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -DbPassword $DbPassword
-      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -TimeoutSeconds 20
+      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -DbPassword $DbPassword -TimeoutSeconds 20
     }
     Write-Host "   - PostgreSQL servicio listo en 127.0.0.1:$Port, datos en $pgData."
     return 0
@@ -337,10 +366,10 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   if ($LASTEXITCODE -eq 0) {
     Write-Host "   - PostgreSQL portable ya estaba listo en 127.0.0.1:$Port."
     try {
-      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -TimeoutSeconds 8
+      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -DbPassword $DbPassword -TimeoutSeconds 8
     } catch {
       Repair-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -DbPassword $DbPassword
-      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -TimeoutSeconds 20
+      Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -DbPassword $DbPassword -TimeoutSeconds 20
     }
     return 0
   }
@@ -401,7 +430,7 @@ function Start-PortablePostgres([string]$Port, [string]$DbName, [string]$DbUser,
   } else {
     Write-Host "   - PostgreSQL esta aceptando conexiones, pero no se pudo usar postgres para bootstrap. Continuando con DB existente."
   }
-  Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser
+  Wait-PortableAppDatabase -Port $Port -DbName $DbName -DbUser $DbUser -DbPassword $DbPassword
   Write-Host "   - PostgreSQL portable listo en 127.0.0.1:$Port, datos en data\db."
   if ($postgresProc -ne $null) { return $postgresProc.Id }
   return 0
@@ -691,7 +720,7 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   if (-not $ready) {
     Write-Host "No pude confirmar $frontUrl aun, pero intentare abrirlo igualmente."
   }
-  if ($BootstrapOnly) {
+  if ($BootstrapOnly -and -not $KeepServicesRunning) {
     Write-Host "Bootstrap completo: API y Front respondieron. Cerrando servicios temporales..."
     Stop-Process -Id $frontProc.Id -Force -ErrorAction SilentlyContinue
     Stop-Process -Id $apiProc.Id -Force -ErrorAction SilentlyContinue
@@ -703,6 +732,10 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
       Stop-Process -Id $PostgresPid -Force -ErrorAction SilentlyContinue
     }
     if (Test-Path -Path $pidFile) { Remove-Item -Path $pidFile -Force -ErrorAction SilentlyContinue }
+    return
+  }
+  if ($BootstrapOnly) {
+    Write-Host "Bootstrap completo: API y Front quedan precalentados para el primer acceso."
     return
   }
   if (-not $NoBrowser) {

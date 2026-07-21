@@ -14,6 +14,11 @@ const electronProfileDir = path.join(dataRoot, 'electron-profile');
 let runner = null;
 let mainWindow = null;
 
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+  app.quit();
+}
+
 app.setPath('userData', electronProfileDir);
 
 function readEnvValue(key, fallback) {
@@ -98,15 +103,12 @@ function getLastRunLogLine() {
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .filter((line) => !line.startsWith('at '))
-    .filter((line) => !line.startsWith('+'))
-    .filter((line) => !line.includes('CategoryInfo'))
-    .filter((line) => !line.includes('FullyQualifiedErrorId'))
-    .filter((line) => !line.includes('RuntimeException'))
-    .filter((line) => !line.includes('OperationStopped'))
-    .filter((line) => !line.toLowerCase().startsWith('revisa '))
-    .filter((line) => !line.toLowerCase().includes('data\\logs'))
-    .filter((line) => !line.toLowerCase().includes('pg-command.err.tmp'));
+    .filter((line) =>
+      /^ERROR:\s+/i.test(line) ||
+      /^\[\d+\/\d+\]\s+/.test(line) ||
+      /^-\s+/.test(line) ||
+      /^Bootstrap\s+/i.test(line)
+    );
   return lines.length ? lines[lines.length - 1].slice(0, 180) : 'Preparando arranque...';
 }
 
@@ -164,7 +166,14 @@ function createWindow() {
   `));
 }
 
+app.on('second-instance', () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.focus();
+});
+
 app.whenReady().then(async () => {
+  if (!hasSingleInstanceLock) return;
   await session.defaultSession.clearStorageData().catch(() => {});
   await session.defaultSession.clearCache().catch(() => {});
   createWindow();

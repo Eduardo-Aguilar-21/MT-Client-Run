@@ -29,6 +29,7 @@ New-Item -ItemType Directory -Force -Path $pgData, $logsDir | Out-Null
 if (-not (Test-Path $initdb)) { throw "No se encontro $initdb" }
 
 icacls $dataRoot /grant "*S-1-5-20:(OI)(CI)F" /T | Out-Null
+icacls $dataRoot /grant "*S-1-5-32-545:(OI)(CI)M" /T | Out-Null
 icacls $runRoot /grant "*S-1-5-20:(OI)(CI)RX" /T | Out-Null
 
 if (-not (Test-Path (Join-Path $pgData "PG_VERSION"))) {
@@ -59,6 +60,17 @@ if ($roleExists.Trim() -ne "1") {
   & $psql -h 127.0.0.1 -p $port -U postgres -d postgres -c "ALTER ROLE `"$dbUser`" WITH PASSWORD '$dbPassword'" | Out-Null
 }
 & $createdb -h 127.0.0.1 -p $port -U postgres -O $dbUser $dbName 2>$null
+& $psql -h 127.0.0.1 -p $port -U postgres -d postgres -v ON_ERROR_STOP=1 -c "ALTER DATABASE `"$dbName`" OWNER TO `"$dbUser`"" | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "No se pudo asignar la base $dbName a $dbUser" }
+& $psql -h 127.0.0.1 -p $port -U postgres -d $dbName -v ON_ERROR_STOP=1 -c "ALTER SCHEMA public OWNER TO `"$dbUser`"; GRANT ALL ON SCHEMA public TO `"$dbUser`";" | Out-Null
+if ($LASTEXITCODE -ne 0) { throw "No se pudieron asignar permisos de schema a $dbUser" }
 
+$env:PGPASSWORD = $dbPassword
+$appReady = (& $psql -w -h 127.0.0.1 -p $port -U $dbUser -d $dbName -tAc "SELECT 1" 2>$null) -join ""
+$appExitCode = $LASTEXITCODE
+Remove-Item Env:\PGPASSWORD -ErrorAction SilentlyContinue
+if ($appExitCode -ne 0 -or $appReady.Trim() -ne "1") {
+  throw "El servicio inicio, pero fallo la conexion final de $dbUser a $dbName"
+}
 
 Write-Host "Servicio PostgreSQL listo: $serviceName en 127.0.0.1:$port"

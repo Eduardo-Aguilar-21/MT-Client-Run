@@ -38,6 +38,9 @@ Filename: "{app}\install-postgres-service-MT-Cotiza-Client.bat"; WorkingDir: "{a
 Filename: "{app}\install-bootstrap-MT-Cotiza-Client.bat"; WorkingDir: "{app}"; StatusMsg: "Preparando base de datos local por primera vez..."; Flags: runhidden waituntilterminated
 Filename: "{app}\electron\dist\electron.exe"; Parameters: """{app}\electron"""; WorkingDir: "{app}"; Description: "Abrir {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
+[Registry]
+Root: HKLM; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "MTCotizaClientServices"; ValueData: """{app}\start-MT-Cotiza-Client-Services-Silent.vbs"""; Flags: uninsdeletevalue
+
 [UninstallRun]
 Filename: "{cmd}"; Parameters: "/c sc stop MTCotizaPostgres & sc delete MTCotizaPostgres"; Flags: runhidden
 
