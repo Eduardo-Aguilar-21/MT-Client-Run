@@ -1,6 +1,7 @@
 param(
   [switch]$NoBrowser,
-  [switch]$BootstrapOnly
+  [switch]$BootstrapOnly,
+  [switch]$ResetBaseAccount
 )
 
 Set-StrictMode -Version Latest
@@ -658,6 +659,7 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
     "-Dspring.datasource.hikari.initialization-fail-timeout=60000"
     "-Dspring.datasource.hikari.connection-timeout=30000"
     "-Dspring.datasource.hikari.validation-timeout=5000"
+    "-Dmt-cotiza.reset-base-account=$($ResetBaseAccount.IsPresent.ToString().ToLowerInvariant())"
     "-Dserver-sync.secret="
     "-Dserver-sync.users-url="
     "-Dserver-sync.user-update-url="

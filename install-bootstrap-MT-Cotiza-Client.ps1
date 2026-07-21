@@ -5,6 +5,7 @@ $runRoot = $PSScriptRoot
 $dataRoot = Join-Path $env:ProgramData "MT Cotiza Client\data"
 $dbVersion = Join-Path $dataRoot "db\PG_VERSION"
 $bootstrapMarker = Join-Path $dataRoot "bootstrap.done"
+$baseAccountMarker = Join-Path $dataRoot "base-account-v1.done"
 $bootstrapLog = Join-Path $dataRoot "logs\install-bootstrap.log"
 
 New-Item -ItemType Directory -Force -Path (Join-Path $dataRoot "logs") | Out-Null
@@ -20,18 +21,22 @@ if (Test-Path -Path (Join-Path $runRoot "installer-db-choice.env")) {
 
 $mode = [Environment]::GetEnvironmentVariable("RUN_DB_MODE", "Process")
 if ([string]::IsNullOrWhiteSpace($mode)) { $mode = "portable" }
-if ($mode -eq "portable" -and (Test-Path -Path $dbVersion) -and (Test-Path -Path $bootstrapMarker)) {
+if ($mode -eq "portable" -and (Test-Path -Path $dbVersion) -and (Test-Path -Path $bootstrapMarker) -and (Test-Path -Path $baseAccountMarker)) {
   "Data local existente detectada. Bootstrap de instalacion omitido: $dataRoot" | Set-Content -Path $bootstrapLog -Encoding UTF8
   exit 0
 }
-if ($mode -eq "external" -and (Test-Path -Path $bootstrapMarker)) {
+if ($mode -eq "external" -and (Test-Path -Path $bootstrapMarker) -and (Test-Path -Path $baseAccountMarker)) {
   "Bootstrap external existente detectado. Omitido." | Set-Content -Path $bootstrapLog -Encoding UTF8
   exit 0
 }
 
 "Bootstrap inicial iniciado: $(Get-Date -Format o)" | Set-Content -Path $bootstrapLog -Encoding UTF8
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $runRoot "MT-Cotiza-Client-Run.ps1") -NoBrowser -BootstrapOnly *>> $bootstrapLog
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $runRoot "MT-Cotiza-Client-Run.ps1") -NoBrowser -BootstrapOnly -ResetBaseAccount *>> $bootstrapLog
 $exitCode = $LASTEXITCODE
-if ($exitCode -eq 0) { Set-Content -Path $bootstrapMarker -Value (Get-Date -Format o) -Encoding ASCII }
+if ($exitCode -eq 0) {
+  $completedAt = Get-Date -Format o
+  Set-Content -Path $bootstrapMarker -Value $completedAt -Encoding ASCII
+  Set-Content -Path $baseAccountMarker -Value $completedAt -Encoding ASCII
+}
 "Bootstrap inicial terminado con codigo ${exitCode}: $(Get-Date -Format o)" | Add-Content -Path $bootstrapLog
 exit $exitCode
