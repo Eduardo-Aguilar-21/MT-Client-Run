@@ -231,24 +231,30 @@ Ejecutar:
 stop-MT-Cotiza-Client.bat
 ```
 
-## Opcion app de escritorio con Electron
+## Aplicacion de escritorio con Electron
 
-El modo web sigue disponible con:
+El lanzador principal abre siempre la aplicacion de escritorio:
 
 ```text
 start-MT-Cotiza-Client.bat
 ```
 
-Para probar la ventana tipo app nativa, primero prepara Electron una vez:
+Tambien puede iniciarse explicitamente con:
+
+```text
+start-MT-Cotiza-Client-Electron.bat
+```
+
+Antes de distribuir el Run, Electron se prepara una vez con:
 
 ```text
 prepare-MT-Cotiza-Client-Run-Electron.bat
 ```
 
-Luego inicia:
+El modo navegador queda disponible solamente mediante:
 
 ```text
-start-MT-Cotiza-Client-Electron.bat
+start-MT-Cotiza-Client-Web.bat
 ```
 
 Este modo usa los mismos servicios locales que el modo web:

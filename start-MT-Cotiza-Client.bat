@@ -1,2 +1,5 @@
 @echo off
-wscript.exe "%~dp0MT-Cotiza-Client-Run-Start-Silent.vbs"
+setlocal
+cd /d "%~dp0"
+call "%~dp0start-MT-Cotiza-Client-Electron.bat"
+exit /b %ERRORLEVEL%
