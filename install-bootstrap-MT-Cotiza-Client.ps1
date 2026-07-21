@@ -30,7 +30,7 @@ if ($mode -eq "external" -and (Test-Path -Path $bootstrapMarker)) {
 }
 
 "Bootstrap inicial iniciado: $(Get-Date -Format o)" | Set-Content -Path $bootstrapLog -Encoding UTF8
-& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $runRoot "MT-Cotiza-Client-Run.ps1") -NoBrowser -BootstrapOnly -KeepServicesRunning *>> $bootstrapLog
+& powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $runRoot "MT-Cotiza-Client-Run.ps1") -NoBrowser -BootstrapOnly *>> $bootstrapLog
 $exitCode = $LASTEXITCODE
 if ($exitCode -eq 0) { Set-Content -Path $bootstrapMarker -Value (Get-Date -Format o) -Encoding ASCII }
 "Bootstrap inicial terminado con codigo ${exitCode}: $(Get-Date -Format o)" | Add-Content -Path $bootstrapLog

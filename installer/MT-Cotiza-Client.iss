@@ -36,6 +36,7 @@ Name: "desktopicon"; Description: "Crear acceso directo en el escritorio"; Group
 [Run]
 Filename: "{app}\install-postgres-service-MT-Cotiza-Client.bat"; WorkingDir: "{app}"; StatusMsg: "Instalando PostgreSQL local como servicio de Windows..."; Flags: runhidden waituntilterminated
 Filename: "{app}\install-bootstrap-MT-Cotiza-Client.bat"; WorkingDir: "{app}"; StatusMsg: "Preparando base de datos local por primera vez..."; Flags: runhidden waituntilterminated
+Filename: "{sys}\wscript.exe"; Parameters: """{app}\start-MT-Cotiza-Client-Services-Silent.vbs"""; WorkingDir: "{app}"; StatusMsg: "Precalentando servicios locales..."; Flags: runhidden nowait
 Filename: "{app}\electron\dist\electron.exe"; Parameters: """{app}\electron"""; WorkingDir: "{app}"; Description: "Abrir {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
 [Registry]

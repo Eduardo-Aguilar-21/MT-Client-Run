@@ -1,7 +1,6 @@
 param(
   [switch]$NoBrowser,
-  [switch]$BootstrapOnly,
-  [switch]$KeepServicesRunning
+  [switch]$BootstrapOnly
 )
 
 Set-StrictMode -Version Latest
@@ -712,7 +711,7 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   if ($PostgresPid -gt 0) { $pidState.postgres = $PostgresPid }
   $pidState | ConvertTo-Json | Set-Content -Path $pidFile -Encoding UTF8
 
-  $frontUrl = "http://localhost:$FrontPort/login"
+  $frontUrl = "http://127.0.0.1:$FrontPort/login"
   $ready = $false
   for ($i = 0; $i -lt 30; $i++) {
     try {
@@ -724,22 +723,20 @@ function Start-Standalone([string]$ApiUrl, [string]$FrontPort, [string]$ApiProfi
   if (-not $ready) {
     Write-Host "No pude confirmar $frontUrl aun, pero intentare abrirlo igualmente."
   }
-  if ($BootstrapOnly -and -not $KeepServicesRunning) {
+  if ($BootstrapOnly) {
     Write-Host "Bootstrap completo: API y Front respondieron. Cerrando servicios temporales..."
     Stop-Process -Id $frontProc.Id -Force -ErrorAction SilentlyContinue
     Stop-Process -Id $apiProc.Id -Force -ErrorAction SilentlyContinue
-    $pgData = Join-Path $dataRoot "db"
-    $pgCtl = Join-Path $portablePostgresBin "pg_ctl.exe"
-    if (Test-Path -Path $pgCtl) {
-      & $pgCtl @("-D", $pgData, "stop", "-m", "fast") >$null 2>$null
-    } elseif ($PostgresPid -gt 0) {
-      Stop-Process -Id $PostgresPid -Force -ErrorAction SilentlyContinue
+    if ($PostgresPid -gt 0) {
+      $pgData = Join-Path $dataRoot "db"
+      $pgCtl = Join-Path $portablePostgresBin "pg_ctl.exe"
+      if (Test-Path -Path $pgCtl) {
+        & $pgCtl @("-D", $pgData, "stop", "-m", "fast") >$null 2>$null
+      } else {
+        Stop-Process -Id $PostgresPid -Force -ErrorAction SilentlyContinue
+      }
     }
     if (Test-Path -Path $pidFile) { Remove-Item -Path $pidFile -Force -ErrorAction SilentlyContinue }
-    return
-  }
-  if ($BootstrapOnly) {
-    Write-Host "Bootstrap completo: API y Front quedan precalentados para el primer acceso."
     return
   }
   if (-not $NoBrowser) {
