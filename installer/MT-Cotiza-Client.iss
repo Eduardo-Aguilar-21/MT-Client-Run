@@ -1,5 +1,5 @@
 #define MyAppName "MT Cotiza Client"
-#define MyAppVersion "0.4.0"
+#define MyAppVersion "0.5.0"
 #define MyAppPublisher "MT Cotiza"
 #define MyAppExeName "electron.exe"
 #define MyAppId "{{7A45B986-1A83-49B1-9A8A-7C0A36A53A60}}"
@@ -27,7 +27,7 @@ RestartApplications=no
 
 [Files]
 Source: "stop-client-processes.ps1"; Flags: dontcopy
-Source: "..\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: ".git\*,.env,data\*,backups\*,installer\output\*,runtime\_downloads\*,*.tmp,*.log,*.out.log,*.err.log,standalone.pids.json"
+Source: "..\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: ".git\*,.env,data\*,backups\*,installer\output\*,runtime\_downloads\*,*.tmp,*.log,*.out.log,*.err.log,standalone.pids.json,installer-account.env"
 
 [InstallDelete]
 Type: files; Name: "{userdesktop}\MT Cotiza Client.lnk"
@@ -61,6 +61,7 @@ Type: filesandordirs; Name: "{app}\backups"
 [Code]
 var
   ThemePage: TInputOptionWizardPage;
+  AccountPage: TInputQueryWizardPage;
   PgInfoPage: TWizardPage;
   PgInfoLabel: TNewStaticText;
 
@@ -83,6 +84,53 @@ begin
   SettingsFile := SettingsDir + '\ui-settings.env';
   ForceDirectories(SettingsDir);
   SaveStringToFile(SettingsFile, 'THEME=' + SelectedTheme() + #13#10, False);
+end;
+
+function HasExistingBootstrap(): Boolean;
+begin
+  Result := FileExists(ExpandConstant('{commonappdata}\MT Cotiza Client\data\bootstrap.done'));
+end;
+
+function IsValidUsername(Value: String): Boolean;
+var
+  I: Integer;
+begin
+  Result := (Length(Value) >= 3) and (Length(Value) <= 40);
+  if not Result then
+    exit;
+
+  for I := 1 to Length(Value) do begin
+    if Pos(Value[I], 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-') = 0 then begin
+      Result := False;
+      exit;
+    end;
+  end;
+end;
+
+procedure SaveAccountBootstrap();
+var
+  AccountFile: String;
+  AccountContent: String;
+  ResultCode: Integer;
+begin
+  AccountFile := ExpandConstant('{app}\installer-account.env');
+  DeleteFile(AccountFile);
+  if HasExistingBootstrap() then
+    exit;
+
+  AccountContent :=
+    'MT_COTIZA_BASE_ACCOUNT_FULL_NAME=' + Trim(AccountPage.Values[0]) + #13#10 +
+    'MT_COTIZA_BASE_ACCOUNT_USERNAME=' + Lowercase(Trim(AccountPage.Values[1])) + #13#10 +
+    'MT_COTIZA_BASE_ACCOUNT_PASSWORD=' + AccountPage.Values[2] + #13#10;
+  SaveStringToFile(AccountFile, AccountContent, False);
+  Exec(
+    ExpandConstant('{cmd}'),
+    '/c icacls "' + AccountFile + '" /inheritance:r /grant:r *S-1-5-18:F *S-1-5-32-544:F >nul',
+    '',
+    SW_HIDE,
+    ewWaitUntilTerminated,
+    ResultCode
+  );
 end;
 
 function DetectExistingPostgres(): Boolean;
@@ -159,6 +207,17 @@ begin
   ThemePage.Add('Oscuro');
   ThemePage.SelectedValueIndex := 0;
 
+  AccountPage := CreateInputQueryPage(
+    ThemePage.ID,
+    'Cuenta administradora inicial',
+    'Crea el usuario principal de esta instalación.',
+    'Estas credenciales serán necesarias para ingresar a MT Cotiza. Guárdalas en un lugar seguro.'
+  );
+  AccountPage.Add('Nombre completo:', False);
+  AccountPage.Add('Usuario:', False);
+  AccountPage.Add('Contraseña:', True);
+  AccountPage.Add('Confirmar contraseña:', True);
+
   PgInfoPage := CreateCustomPage(
     wpSelectDir,
     'Configuración de PostgreSQL',
@@ -190,8 +249,58 @@ begin
   end;
 end;
 
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := (PageID = AccountPage.ID) and HasExistingBootstrap();
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  FullName: String;
+  Username: String;
+  Password: String;
+begin
+  Result := True;
+  if CurPageID <> AccountPage.ID then
+    exit;
+
+  FullName := Trim(AccountPage.Values[0]);
+  Username := Trim(AccountPage.Values[1]);
+  Password := AccountPage.Values[2];
+
+  if Length(FullName) < 3 then begin
+    MsgBox('Ingresa el nombre completo del administrador.', mbError, MB_OK);
+    AccountPage.Edits[0].SetFocus;
+    Result := False;
+    exit;
+  end;
+
+  if not IsValidUsername(Username) then begin
+    MsgBox('El usuario debe tener entre 3 y 40 caracteres y usar solo letras, números, punto, guion o guion bajo.', mbError, MB_OK);
+    AccountPage.Edits[1].SetFocus;
+    Result := False;
+    exit;
+  end;
+
+  if (Length(Password) < 8) or (Length(Password) > 64) then begin
+    MsgBox('La contraseña debe tener entre 8 y 64 caracteres.', mbError, MB_OK);
+    AccountPage.Edits[2].SetFocus;
+    Result := False;
+    exit;
+  end;
+
+  if Password <> AccountPage.Values[3] then begin
+    MsgBox('Las contraseñas no coinciden.', mbError, MB_OK);
+    AccountPage.Edits[3].SetFocus;
+    Result := False;
+    exit;
+  end;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-  if CurStep = ssPostInstall then
+  if CurStep = ssPostInstall then begin
     SaveThemePreference();
+    SaveAccountBootstrap();
+  end;
 end;

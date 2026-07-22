@@ -1,6 +1,6 @@
 {
   "name": "mt-cotiza-client-electron",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "main": "main.js",
   "scripts": {
