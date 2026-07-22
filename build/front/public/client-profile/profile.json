@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "format": "mycont360-profile",
   "targetApplication": "Mycont360",
-  "profileId": "nexus-default",
-  "companyName": "Nexus",
-  "companyTagline": "Ingeniería Mecatrónica",
+  "profileId": "mt-cotiza-basic",
+  "companyName": "MT-Cotiza",
+  "companyTagline": "Gestión comercial",
   "theme": {
     "primaryColor": "#1f2937",
     "secondaryColor": "#111827",
     "accentColor": "#378ADD"
   },
   "assets": {
-    "primaryLogo": "01_NEXUS_STATIC_PREMIUM.svg",
-    "lightLogo": "01_NEXUS_STATIC_PREMIUM.svg",
-    "darkLogo": "01_NEXUS_STATIC_PREMIUM.svg",
+    "primaryLogo": "icon.svg",
+    "lightLogo": "icon.svg",
+    "darkLogo": "icon.svg",
     "appIcon": "app-icon.png",
     "splashLogo": "splash-logo.png"
   }
