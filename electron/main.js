@@ -11,8 +11,6 @@ process.env.MT_COTIZA_DATA_ROOT = dataRoot;
 const logsDir = path.join(dataRoot, 'logs');
 const runLog = path.join(logsDir, 'electron-run.log');
 const uiSettingsFile = path.join(dataRoot, 'ui-settings.env');
-const activeProfileDir = path.join(dataRoot, 'profile', 'active');
-const activeProfileManifest = path.join(activeProfileDir, 'profile.json');
 const electronProfileDir = path.join(dataRoot, 'electron-profile');
 const defaultAppIcon = path.join(__dirname, 'assets', 'run-app-icon.png');
 const defaultSplashLogo = path.join(__dirname, 'assets', 'run-logo.png');
@@ -50,27 +48,6 @@ function readEnvValue(key, fallback) {
 function readPreferredTheme() {
   const theme = readFileValue(uiSettingsFile, 'THEME', 'system').toLowerCase();
   return ['system', 'light', 'dark'].includes(theme) ? theme : 'system';
-}
-
-function resolveProfileAsset(fileName) {
-  if (typeof fileName !== 'string' || !fileName || path.basename(fileName) !== fileName) return null;
-  const profileBase = path.resolve(activeProfileDir);
-  const resolved = path.resolve(activeProfileDir, fileName);
-  if (!resolved.startsWith(profileBase + path.sep)) return null;
-  return fs.existsSync(resolved) ? resolved : null;
-}
-
-function readActiveProfile() {
-  try {
-    const manifest = JSON.parse(fs.readFileSync(activeProfileManifest, 'utf8'));
-    if (manifest?.schemaVersion !== 1 || manifest?.format !== 'mycont360-profile') return null;
-    return {
-      appIcon: resolveProfileAsset(manifest?.assets?.appIcon),
-      splashLogo: resolveProfileAsset(manifest?.assets?.splashLogo)
-    };
-  } catch {
-    return null;
-  }
 }
 
 function withInitialTheme(url, theme) {
@@ -184,9 +161,8 @@ async function loadApplicationUrl(url) {
 }
 
 async function createWindow() {
-  const activeProfile = readActiveProfile();
-  const windowIcon = activeProfile?.appIcon || defaultAppIcon;
-  const splashLogo = activeProfile?.splashLogo || defaultSplashLogo;
+  const windowIcon = defaultAppIcon;
+  const splashLogo = defaultSplashLogo;
   const logoDataUri = getLogoDataUri(splashLogo);
   const logPathText = runLog.replace(/\\/g, '\\\\');
 

@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "format": "mycont360-profile",
   "targetApplication": "Mycont360",
-  "profileId": "mycont360-default",
-  "companyName": "MyCont360",
-  "companyTagline": "Cotiza. Organiza. Controla. Crece.",
+  "profileId": "nexus-default",
+  "companyName": "Nexus",
+  "companyTagline": "Ingeniería Mecatrónica",
   "theme": {
     "primaryColor": "#1f2937",
     "secondaryColor": "#111827",
     "accentColor": "#378ADD"
   },
   "assets": {
-    "primaryLogo": "splash-logo.png",
-    "lightLogo": "splash-logo.png",
-    "darkLogo": "splash-logo.png",
+    "primaryLogo": "01_NEXUS_STATIC_PREMIUM.svg",
+    "lightLogo": "01_NEXUS_STATIC_PREMIUM.svg",
+    "darkLogo": "01_NEXUS_STATIC_PREMIUM.svg",
     "appIcon": "app-icon.png",
     "splashLogo": "splash-logo.png"
   }

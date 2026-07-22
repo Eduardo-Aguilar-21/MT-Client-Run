@@ -142,12 +142,22 @@ try {
       Remove-Item -LiteralPath $stagingRoot -Recurse -Force -ErrorAction SilentlyContinue
     }
   } elseif (Test-Path -LiteralPath (Join-Path $activeRoot "profile.json") -PathType Leaf) {
-    try {
-      Test-ExpandedProfile $activeRoot | Out-Null
-      Write-ProfileLog "Perfil existente conservado."
-    } catch {
-      Write-ProfileLog "Perfil existente invalido: $($_.Exception.Message)"
-      Install-DefaultProfile "el perfil existente estaba dañado"
+    $activeSourceFile = Join-Path $profileRoot "active-source.txt"
+    $activeSource = if (Test-Path -LiteralPath $activeSourceFile) {
+      (Get-Content -LiteralPath $activeSourceFile -Raw).Trim().ToLowerInvariant()
+    } else {
+      ""
+    }
+    if ($activeSource -eq "default") {
+      Install-DefaultProfile "actualizacion del perfil predeterminado"
+    } else {
+      try {
+        Test-ExpandedProfile $activeRoot | Out-Null
+        Write-ProfileLog "Perfil personalizado existente conservado."
+      } catch {
+        Write-ProfileLog "Perfil existente invalido: $($_.Exception.Message)"
+        Install-DefaultProfile "el perfil existente estaba dañado"
+      }
     }
   } else {
     Install-DefaultProfile "no se selecciono un archivo .mct"
