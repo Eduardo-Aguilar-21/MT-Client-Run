@@ -7,6 +7,7 @@ $profileRoot = Join-Path $dataRoot "profile"
 $activeRoot = Join-Path $profileRoot "active"
 $defaultRoot = Join-Path (Join-Path $runRoot "profiles") "default"
 $installerProfile = Join-Path $runRoot "installer-profile.mct"
+$frontProfileRoot = Join-Path (Join-Path (Join-Path $runRoot "build") "front") "public\client-profile"
 $profileLog = Join-Path (Join-Path $dataRoot "logs") "install-profile.log"
 $maxPackageBytes = 10MB
 $maxExpandedBytes = 25MB
@@ -111,6 +112,18 @@ function Install-DefaultProfile([string]$Reason) {
   }
 }
 
+function Publish-FrontendProfile() {
+  if (-not (Test-Path -LiteralPath (Split-Path $frontProfileRoot -Parent) -PathType Container)) {
+    Write-ProfileLog "No se publico el perfil web porque el build del Front no esta disponible."
+    return
+  }
+  Remove-Item -LiteralPath $frontProfileRoot -Recurse -Force -ErrorAction SilentlyContinue
+  New-Item -ItemType Directory -Force -Path $frontProfileRoot | Out-Null
+  Copy-Item -Path (Join-Path $defaultRoot "*") -Destination $frontProfileRoot -Recurse -Force
+  Copy-Item -Path (Join-Path $activeRoot "*") -Destination $frontProfileRoot -Recurse -Force
+  Write-ProfileLog "Perfil activo publicado para Electron y Front."
+}
+
 Write-ProfileLog "Inicio de configuracion de perfil."
 try {
   if (Test-Path -LiteralPath $installerProfile -PathType Leaf) {
@@ -139,6 +152,7 @@ try {
   } else {
     Install-DefaultProfile "no se selecciono un archivo .mct"
   }
+  Publish-FrontendProfile
   Write-ProfileLog "Configuracion de perfil completada."
   exit 0
 } catch {
