@@ -1,6 +1,10 @@
 param(
   [Parameter(Mandatory = $true)]
-  [string]$InstallRoot
+  [string]$InstallRoot,
+
+  [switch]$ResetData,
+
+  [string]$DataRoot = (Join-Path (Join-Path $env:ProgramData "MT Cotiza Client") "data")
 )
 
 Set-StrictMode -Version Latest
@@ -35,5 +39,37 @@ Get-Process electron, java, node -ErrorAction SilentlyContinue |
     }
   } |
   Stop-Process -Force -ErrorAction SilentlyContinue
+
+if ($ResetData) {
+  Stop-Service MTCotizaPostgres -Force -ErrorAction SilentlyContinue
+
+  for ($attempt = 1; $attempt -le 40; $attempt++) {
+    $service = Get-Service MTCotizaPostgres -ErrorAction SilentlyContinue
+    if ($null -eq $service -or $service.Status -eq [System.ServiceProcess.ServiceControllerStatus]::Stopped) {
+      break
+    }
+    Start-Sleep -Milliseconds 250
+  }
+
+  $service = Get-Service MTCotizaPostgres -ErrorAction SilentlyContinue
+  if ($null -ne $service -and $service.Status -ne [System.ServiceProcess.ServiceControllerStatus]::Stopped) {
+    throw "No se pudo detener MTCotizaPostgres para eliminar los datos locales."
+  }
+
+  for ($attempt = 1; $attempt -le 10 -and (Test-Path -LiteralPath $DataRoot); $attempt++) {
+    try {
+      Remove-Item -LiteralPath $DataRoot -Recurse -Force -ErrorAction Stop
+    } catch {
+      if ($attempt -eq 10) {
+        throw
+      }
+      Start-Sleep -Milliseconds 500
+    }
+  }
+
+  if (Test-Path -LiteralPath $DataRoot) {
+    throw "No se pudieron eliminar completamente los datos locales: $DataRoot"
+  }
+}
 
 exit 0

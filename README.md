@@ -135,6 +135,15 @@ El diagnóstico queda en:
 C:\ProgramData\MT Cotiza Client\data\logs\install-profile.log
 ```
 
+## Datos existentes durante la instalación
+
+Si el instalador detecta datos de una instalación anterior, permite elegir entre:
+
+- Usar y conservar los datos existentes: mantiene base de datos, cuentas, archivos subidos y perfil empresarial.
+- Instalar desde cero: pide confirmación, detiene los procesos y el servicio local, y elimina todos los datos anteriores antes de crear la nueva cuenta administradora.
+
+La opción recomendada y seleccionada por defecto es conservar los datos.
+
 ## Base de datos
 
 Por defecto Run administra PostgreSQL portable dentro de la carpeta Run:

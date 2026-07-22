@@ -1,5 +1,5 @@
 #define MyAppName "MT Cotiza Client"
-#define MyAppVersion "0.6.0"
+#define MyAppVersion "0.7.0"
 #define MyAppPublisher "MT Cotiza"
 #define MyAppExeName "electron.exe"
 #define MyAppId "{{7A45B986-1A83-49B1-9A8A-7C0A36A53A60}}"
@@ -61,6 +61,7 @@ Type: filesandordirs; Name: "{app}\backups"
 
 [Code]
 var
+  DataModePage: TInputOptionWizardPage;
   ThemePage: TInputOptionWizardPage;
   ProfilePage: TInputFileWizardPage;
   AccountPage: TInputQueryWizardPage;
@@ -106,6 +107,16 @@ end;
 function HasConfiguredBaseAccount(): Boolean;
 begin
   Result := FileExists(ExpandConstant('{commonappdata}\MT Cotiza Client\data\base-account-v2.done'));
+end;
+
+function HasExistingLocalData(): Boolean;
+begin
+  Result := DirExists(ExpandConstant('{commonappdata}\MT Cotiza Client\data'));
+end;
+
+function WantsFreshInstall(): Boolean;
+begin
+  Result := HasExistingLocalData() and (DataModePage.SelectedValueIndex = 1);
 end;
 
 function IsValidUsername(Value: String): Boolean;
@@ -181,13 +192,20 @@ function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   I: Integer;
   ResultCode: Integer;
+  StopArguments: String;
 begin
   Result := '';
 
   ExtractTemporaryFile('stop-client-processes.ps1');
+  StopArguments :=
+    '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\stop-client-processes.ps1') +
+    '" -InstallRoot "' + ExpandConstant('{app}') + '"';
+  if WantsFreshInstall() then
+    StopArguments := StopArguments +
+      ' -ResetData -DataRoot "' + ExpandConstant('{commonappdata}\MT Cotiza Client\data') + '"';
   if not Exec(
     ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
-    '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\stop-client-processes.ps1') + '" -InstallRoot "' + ExpandConstant('{app}') + '"',
+    StopArguments,
     '',
     SW_HIDE,
     ewWaitUntilTerminated,
@@ -212,8 +230,20 @@ end;
 
 procedure InitializeWizard();
 begin
-  ThemePage := CreateInputOptionPage(
+  DataModePage := CreateInputOptionPage(
     wpLicense,
+    'Datos locales existentes',
+    'Elige cómo debe tratar Mycont360 la información de una instalación anterior.',
+    'Conservar es la opción segura para actualizar. Instalar desde cero elimina permanentemente la base de datos, cuentas, archivos subidos, logs y perfil empresarial.',
+    True,
+    False
+  );
+  DataModePage.Add('Usar y conservar los datos existentes (recomendado)');
+  DataModePage.Add('Instalar desde cero y eliminar todos los datos anteriores');
+  DataModePage.SelectedValueIndex := 0;
+
+  ThemePage := CreateInputOptionPage(
+    DataModePage.ID,
     'Apariencia inicial',
     'Selecciona el modo de color que utilizará MT Cotiza Client.',
     'Esta preferencia se aplicará cuando abras la aplicación. Podrás cambiarla después desde MT Cotiza.',
@@ -277,7 +307,9 @@ end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
-  Result := (PageID = AccountPage.ID) and HasConfiguredBaseAccount();
+  Result :=
+    ((PageID = DataModePage.ID) and not HasExistingLocalData()) or
+    ((PageID = AccountPage.ID) and HasConfiguredBaseAccount() and not WantsFreshInstall());
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -287,6 +319,17 @@ var
   Password: String;
 begin
   Result := True;
+  if CurPageID = DataModePage.ID then begin
+    if DataModePage.SelectedValueIndex = 1 then begin
+      Result := MsgBox(
+        'Se eliminarán permanentemente la base de datos, todas las cuentas, archivos subidos, logs y el perfil empresarial de esta instalación.'#13#10#13#10 +
+        '¿Confirmas que deseas instalar desde cero?',
+        mbConfirmation,
+        MB_YESNO
+      ) = IDYES;
+    end;
+    exit;
+  end;
   if CurPageID = ProfilePage.ID then begin
     if Trim(ProfilePage.Values[0]) = '' then
       exit;
