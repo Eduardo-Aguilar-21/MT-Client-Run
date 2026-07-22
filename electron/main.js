@@ -10,6 +10,7 @@ const dataRoot = process.env.MT_COTIZA_DATA_ROOT || defaultDataRoot;
 process.env.MT_COTIZA_DATA_ROOT = dataRoot;
 const logsDir = path.join(dataRoot, 'logs');
 const runLog = path.join(logsDir, 'electron-run.log');
+const uiSettingsFile = path.join(dataRoot, 'ui-settings.env');
 const electronProfileDir = path.join(dataRoot, 'electron-profile');
 const appIcon = path.join(__dirname, 'assets', 'run-app-icon.png');
 const appUserModelId = 'com.mtcotiza.client';
@@ -24,10 +25,9 @@ if (!hasSingleInstanceLock) {
 app.setAppUserModelId(appUserModelId);
 app.setPath('userData', electronProfileDir);
 
-function readEnvValue(key, fallback) {
-  const envFile = path.join(runRoot, '.env');
-  if (!fs.existsSync(envFile)) return fallback;
-  const lines = fs.readFileSync(envFile, 'utf8').split(/\r?\n/);
+function readFileValue(filePath, key, fallback) {
+  if (!fs.existsSync(filePath)) return fallback;
+  const lines = fs.readFileSync(filePath, 'utf8').split(/\r?\n/);
   for (const raw of lines) {
     const line = raw.trim();
     if (!line || line.startsWith('#')) continue;
@@ -38,6 +38,20 @@ function readEnvValue(key, fallback) {
     if (name === key.toLowerCase() && value) return value;
   }
   return fallback;
+}
+
+function readEnvValue(key, fallback) {
+  return readFileValue(path.join(runRoot, '.env'), key, fallback);
+}
+
+function readPreferredTheme() {
+  const theme = readFileValue(uiSettingsFile, 'THEME', 'system').toLowerCase();
+  return ['system', 'light', 'dark'].includes(theme) ? theme : 'system';
+}
+
+function withInitialTheme(url, theme) {
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}initialTheme=${encodeURIComponent(theme)}`;
 }
 
 function waitForAnyUrl(urls, timeoutMs = 0) {
@@ -204,8 +218,9 @@ app.whenReady().then(async () => {
   const frontPort = readEnvValue('FRONTEND_PORT', '3000');
   const configuredHost = readEnvValue("FRONTEND_HOST", "127.0.0.1");
   const appHost = configuredHost;
-  const loginUrl = `http://${appHost}:${frontPort}/login`;
-  const fallbackLoginUrl = appHost === '127.0.0.1' ? `http://localhost:${frontPort}/login` : `http://127.0.0.1:${frontPort}/login`;
+  const preferredTheme = readPreferredTheme();
+  const loginUrl = withInitialTheme(`http://${appHost}:${frontPort}/login`, preferredTheme);
+  const fallbackLoginUrl = withInitialTheme(appHost === '127.0.0.1' ? `http://localhost:${frontPort}/login` : `http://127.0.0.1:${frontPort}/login`, preferredTheme);
   const loginUrls = [loginUrl, fallbackLoginUrl];
   try {
     const readyNow = await waitForAnyUrl(loginUrls, 2000).catch(() => null);

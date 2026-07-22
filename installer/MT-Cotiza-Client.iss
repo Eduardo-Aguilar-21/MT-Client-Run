@@ -1,5 +1,5 @@
 #define MyAppName "MT Cotiza Client"
-#define MyAppVersion "0.3.1"
+#define MyAppVersion "0.4.0"
 #define MyAppPublisher "MT Cotiza"
 #define MyAppExeName "electron.exe"
 #define MyAppId "{{7A45B986-1A83-49B1-9A8A-7C0A36A53A60}}"
@@ -60,8 +60,30 @@ Type: filesandordirs; Name: "{app}\backups"
 
 [Code]
 var
+  ThemePage: TInputOptionWizardPage;
   PgInfoPage: TWizardPage;
   PgInfoLabel: TNewStaticText;
+
+function SelectedTheme(): String;
+begin
+  case ThemePage.SelectedValueIndex of
+    1: Result := 'light';
+    2: Result := 'dark';
+  else
+    Result := 'system';
+  end;
+end;
+
+procedure SaveThemePreference();
+var
+  SettingsDir: String;
+  SettingsFile: String;
+begin
+  SettingsDir := ExpandConstant('{commonappdata}\MT Cotiza Client\data');
+  SettingsFile := SettingsDir + '\ui-settings.env';
+  ForceDirectories(SettingsDir);
+  SaveStringToFile(SettingsFile, 'THEME=' + SelectedTheme() + #13#10, False);
+end;
 
 function DetectExistingPostgres(): Boolean;
 var
@@ -124,6 +146,19 @@ end;
 
 procedure InitializeWizard();
 begin
+  ThemePage := CreateInputOptionPage(
+    wpLicense,
+    'Apariencia inicial',
+    'Selecciona el modo de color que utilizará MT Cotiza Client.',
+    'Esta preferencia se aplicará cuando abras la aplicación. Podrás cambiarla después desde MT Cotiza.',
+    True,
+    False
+  );
+  ThemePage.Add('Modo predeterminado (usar la configuración de Windows)');
+  ThemePage.Add('Claro');
+  ThemePage.Add('Oscuro');
+  ThemePage.SelectedValueIndex := 0;
+
   PgInfoPage := CreateCustomPage(
     wpSelectDir,
     'Configuración de PostgreSQL',
@@ -153,4 +188,10 @@ begin
       '- Datos: C:\ProgramData\MT Cotiza Client\data'#13#10#13#10 +
       'Este PostgreSQL queda aislado para MT Cotiza y no modifica otras instalaciones.';
   end;
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    SaveThemePreference();
 end;
