@@ -1,5 +1,5 @@
 #define MyAppName "MT Cotiza Client"
-#define MyAppVersion "0.5.1"
+#define MyAppVersion "0.6.0"
 #define MyAppPublisher "MT Cotiza"
 #define MyAppExeName "electron.exe"
 #define MyAppId "{{7A45B986-1A83-49B1-9A8A-7C0A36A53A60}}"
@@ -27,7 +27,7 @@ RestartApplications=no
 
 [Files]
 Source: "stop-client-processes.ps1"; Flags: dontcopy
-Source: "..\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: ".git\*,.env,data\*,backups\*,installer\output\*,runtime\_downloads\*,*.tmp,*.log,*.out.log,*.err.log,standalone.pids.json,installer-account.env"
+Source: "..\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: ".git\*,.env,data\*,backups\*,installer\output\*,runtime\_downloads\*,*.tmp,*.log,*.out.log,*.err.log,standalone.pids.json,installer-account.env,installer-profile.mct"
 
 [InstallDelete]
 Type: files; Name: "{userdesktop}\MT Cotiza Client.lnk"
@@ -43,6 +43,7 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\electron\dist\electron.exe"
 Name: "desktopicon"; Description: "Crear acceso directo en el escritorio"; GroupDescription: "Accesos directos:"; Flags: checkedonce
 
 [Run]
+Filename: "{app}\install-client-profile-MT-Cotiza-Client.bat"; WorkingDir: "{app}"; StatusMsg: "Configurando perfil empresarial..."; Flags: runhidden waituntilterminated
 Filename: "{app}\install-postgres-service-MT-Cotiza-Client.bat"; WorkingDir: "{app}"; StatusMsg: "Instalando PostgreSQL local como servicio de Windows..."; Flags: runhidden waituntilterminated
 Filename: "{app}\install-bootstrap-MT-Cotiza-Client.bat"; WorkingDir: "{app}"; StatusMsg: "Preparando base de datos local por primera vez..."; Flags: runhidden waituntilterminated
 Filename: "{sys}\wscript.exe"; Parameters: """{app}\start-MT-Cotiza-Client-Services-Silent.vbs"""; WorkingDir: "{app}"; StatusMsg: "Precalentando servicios locales..."; Flags: runhidden nowait
@@ -61,6 +62,7 @@ Type: filesandordirs; Name: "{app}\backups"
 [Code]
 var
   ThemePage: TInputOptionWizardPage;
+  ProfilePage: TInputFileWizardPage;
   AccountPage: TInputQueryWizardPage;
   PgInfoPage: TWizardPage;
   PgInfoLabel: TNewStaticText;
@@ -84,6 +86,21 @@ begin
   SettingsFile := SettingsDir + '\ui-settings.env';
   ForceDirectories(SettingsDir);
   SaveStringToFile(SettingsFile, 'THEME=' + SelectedTheme() + #13#10, False);
+end;
+
+procedure SaveProfileBootstrap();
+var
+  SelectedFile: String;
+  InstallerFile: String;
+begin
+  ForceDirectories(ExpandConstant('{app}'));
+  InstallerFile := ExpandConstant('{app}\installer-profile.mct');
+  DeleteFile(InstallerFile);
+  SelectedFile := Trim(ProfilePage.Values[0]);
+  if SelectedFile = '' then
+    exit;
+  if not FileCopy(SelectedFile, InstallerFile, False) then
+    MsgBox('No se pudo copiar el perfil seleccionado. Se usará el perfil general de Mycont360.', mbError, MB_OK);
 end;
 
 function HasConfiguredBaseAccount(): Boolean;
@@ -208,8 +225,16 @@ begin
   ThemePage.Add('Oscuro');
   ThemePage.SelectedValueIndex := 0;
 
-  AccountPage := CreateInputQueryPage(
+  ProfilePage := CreateInputFilePage(
     ThemePage.ID,
+    'Perfil empresarial',
+    'Selecciona la personalización de esta empresa.',
+    'El archivo .mct es opcional. Sin uno, Mycont360 usará su perfil general. En una actualización, dejarlo vacío conserva el perfil instalado.'
+  );
+  ProfilePage.Add('Archivo de perfil (.mct):', 'Perfil Mycont360 (*.mct)|*.mct', 'mct');
+
+  AccountPage := CreateInputQueryPage(
+    ProfilePage.ID,
     'Cuenta administradora inicial',
     'Crea el usuario principal de esta instalación.',
     'Estas credenciales serán necesarias para ingresar a MT Cotiza. Guárdalas en un lugar seguro.'
@@ -262,6 +287,21 @@ var
   Password: String;
 begin
   Result := True;
+  if CurPageID = ProfilePage.ID then begin
+    if Trim(ProfilePage.Values[0]) = '' then
+      exit;
+    if not FileExists(ProfilePage.Values[0]) then begin
+      MsgBox('No se encuentra el archivo de perfil seleccionado.', mbError, MB_OK);
+      Result := False;
+      exit;
+    end;
+    if CompareText(ExtractFileExt(ProfilePage.Values[0]), '.mct') <> 0 then begin
+      MsgBox('Selecciona un archivo de perfil Mycont360 con extensión .mct.', mbError, MB_OK);
+      Result := False;
+      exit;
+    end;
+    exit;
+  end;
   if CurPageID <> AccountPage.ID then
     exit;
 
@@ -298,6 +338,7 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssInstall then begin
     SaveThemePreference();
+    SaveProfileBootstrap();
     SaveAccountBootstrap();
   end;
 end;
@@ -307,4 +348,5 @@ begin
   { El bootstrap elimina este archivo al consumirlo. Esta limpieza cubre
     cancelaciones o fallos de instalacion para no dejar la clave en disco. }
   DeleteFile(ExpandConstant('{app}\installer-account.env'));
+  DeleteFile(ExpandConstant('{app}\installer-profile.mct'));
 end;

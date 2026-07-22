@@ -114,6 +114,27 @@ POSTGRES_PORT=15434
 JWT_SECRET_KEY=...
 ```
 
+## Perfil empresarial (.mct)
+
+El instalador permite seleccionar un archivo `.mct` opcional. El perfil se valida y se activa en:
+
+```text
+C:\ProgramData\MT Cotiza Client\data\profile\active
+```
+
+Reglas de instalación y actualización:
+
+- Instalación nueva sin `.mct`: activa el perfil general incluido en `profiles\default`.
+- Instalación con `.mct` válido: activa el perfil de la empresa.
+- Actualización sin selección: conserva el perfil activo.
+- Archivo inválido o perfil dañado: registra el error y recupera el perfil general.
+
+El diagnóstico queda en:
+
+```text
+C:\ProgramData\MT Cotiza Client\data\logs\install-profile.log
+```
+
 ## Base de datos
 
 Por defecto Run administra PostgreSQL portable dentro de la carpeta Run:

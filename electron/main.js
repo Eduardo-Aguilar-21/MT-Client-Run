@@ -11,8 +11,11 @@ process.env.MT_COTIZA_DATA_ROOT = dataRoot;
 const logsDir = path.join(dataRoot, 'logs');
 const runLog = path.join(logsDir, 'electron-run.log');
 const uiSettingsFile = path.join(dataRoot, 'ui-settings.env');
+const activeProfileDir = path.join(dataRoot, 'profile', 'active');
+const activeProfileManifest = path.join(activeProfileDir, 'profile.json');
 const electronProfileDir = path.join(dataRoot, 'electron-profile');
-const appIcon = path.join(__dirname, 'assets', 'run-app-icon.png');
+const defaultAppIcon = path.join(__dirname, 'assets', 'run-app-icon.png');
+const defaultSplashLogo = path.join(__dirname, 'assets', 'run-logo.png');
 const appUserModelId = 'com.mtcotiza.client';
 let runner = null;
 let mainWindow = null;
@@ -47,6 +50,27 @@ function readEnvValue(key, fallback) {
 function readPreferredTheme() {
   const theme = readFileValue(uiSettingsFile, 'THEME', 'system').toLowerCase();
   return ['system', 'light', 'dark'].includes(theme) ? theme : 'system';
+}
+
+function resolveProfileAsset(fileName) {
+  if (typeof fileName !== 'string' || !fileName || path.basename(fileName) !== fileName) return null;
+  const profileBase = path.resolve(activeProfileDir);
+  const resolved = path.resolve(activeProfileDir, fileName);
+  if (!resolved.startsWith(profileBase + path.sep)) return null;
+  return fs.existsSync(resolved) ? resolved : null;
+}
+
+function readActiveProfile() {
+  try {
+    const manifest = JSON.parse(fs.readFileSync(activeProfileManifest, 'utf8'));
+    if (manifest?.schemaVersion !== 1 || manifest?.format !== 'mycont360-profile') return null;
+    return {
+      appIcon: resolveProfileAsset(manifest?.assets?.appIcon),
+      splashLogo: resolveProfileAsset(manifest?.assets?.splashLogo)
+    };
+  } catch {
+    return null;
+  }
 }
 
 function withInitialTheme(url, theme) {
@@ -129,11 +153,19 @@ function getLastRunLogLine() {
   return lines.length ? lines[lines.length - 1].slice(0, 180) : 'Preparando arranque...';
 }
 
-function getLogoDataUri() {
-  const logoPath = path.join(__dirname, 'assets', 'run-logo.png');
+function getLogoDataUri(logoPath) {
   if (!fs.existsSync(logoPath)) return '';
+  const mimeTypes = {
+    '.svg': 'image/svg+xml',
+    '.ico': 'image/x-icon',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.webp': 'image/webp',
+    '.png': 'image/png'
+  };
+  const mimeType = mimeTypes[path.extname(logoPath).toLowerCase()] || 'image/png';
   const logo = fs.readFileSync(logoPath).toString('base64');
-  return `data:image/png;base64,${logo}`;
+  return `data:${mimeType};base64,${logo}`;
 }
 
 function isNavigationAborted(error) {
@@ -152,7 +184,10 @@ async function loadApplicationUrl(url) {
 }
 
 async function createWindow() {
-  const logoDataUri = getLogoDataUri();
+  const activeProfile = readActiveProfile();
+  const windowIcon = activeProfile?.appIcon || defaultAppIcon;
+  const splashLogo = activeProfile?.splashLogo || defaultSplashLogo;
+  const logoDataUri = getLogoDataUri(splashLogo);
   const logPathText = runLog.replace(/\\/g, '\\\\');
 
   mainWindow = new BrowserWindow({
@@ -161,7 +196,7 @@ async function createWindow() {
     minWidth: 1024,
     minHeight: 680,
     title: 'MT Cotiza Client',
-    icon: appIcon,
+    icon: windowIcon,
     autoHideMenuBar: true,
     backgroundColor: '#f5f1e8',
     webPreferences: {

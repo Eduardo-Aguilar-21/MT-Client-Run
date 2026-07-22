@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "format": "mycont360-profile",
+  "targetApplication": "Mycont360",
+  "profileId": "mycont360-default",
+  "companyName": "Mycont360",
+  "companyTagline": "Gestión comercial",
+  "theme": {
+    "primaryColor": "#1f2937",
+    "secondaryColor": "#111827",
+    "accentColor": "#378ADD"
+  },
+  "assets": {
+    "primaryLogo": "splash-logo.png",
+    "lightLogo": "splash-logo.png",
+    "darkLogo": "splash-logo.png",
+    "appIcon": "app-icon.png",
+    "splashLogo": "splash-logo.png"
+  }
+}
+
+
+
