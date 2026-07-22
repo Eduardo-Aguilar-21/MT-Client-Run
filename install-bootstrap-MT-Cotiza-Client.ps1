@@ -5,7 +5,7 @@ $runRoot = $PSScriptRoot
 $dataRoot = Join-Path $env:ProgramData "MT Cotiza Client\data"
 $dbVersion = Join-Path $dataRoot "db\PG_VERSION"
 $bootstrapMarker = Join-Path $dataRoot "bootstrap.done"
-$baseAccountMarker = Join-Path $dataRoot "base-account-v1.done"
+$baseAccountMarker = Join-Path $dataRoot "base-account-v2.done"
 $bootstrapLog = Join-Path $dataRoot "logs\install-bootstrap.log"
 $accountConfigPath = Join-Path $runRoot "installer-account.env"
 
@@ -44,12 +44,12 @@ if (Test-Path -Path (Join-Path $runRoot "installer-db-choice.env")) {
 
 $mode = [Environment]::GetEnvironmentVariable("RUN_DB_MODE", "Process")
 if ([string]::IsNullOrWhiteSpace($mode)) { $mode = "portable" }
-if ($mode -eq "portable" -and (Test-Path -Path $dbVersion) -and (Test-Path -Path $bootstrapMarker)) {
+if ($mode -eq "portable" -and (Test-Path -Path $dbVersion) -and (Test-Path -Path $bootstrapMarker) -and (Test-Path -Path $baseAccountMarker)) {
   "Data local existente detectada. Bootstrap de instalacion omitido: $dataRoot" | Set-Content -Path $bootstrapLog -Encoding UTF8
   Remove-AccountConfig
   exit 0
 }
-if ($mode -eq "external" -and (Test-Path -Path $bootstrapMarker)) {
+if ($mode -eq "external" -and (Test-Path -Path $bootstrapMarker) -and (Test-Path -Path $baseAccountMarker)) {
   "Bootstrap external existente detectado. Omitido." | Set-Content -Path $bootstrapLog -Encoding UTF8
   Remove-AccountConfig
   exit 0

@@ -1,5 +1,5 @@
 #define MyAppName "MT Cotiza Client"
-#define MyAppVersion "0.5.0"
+#define MyAppVersion "0.5.1"
 #define MyAppPublisher "MT Cotiza"
 #define MyAppExeName "electron.exe"
 #define MyAppId "{{7A45B986-1A83-49B1-9A8A-7C0A36A53A60}}"
@@ -86,9 +86,9 @@ begin
   SaveStringToFile(SettingsFile, 'THEME=' + SelectedTheme() + #13#10, False);
 end;
 
-function HasExistingBootstrap(): Boolean;
+function HasConfiguredBaseAccount(): Boolean;
 begin
-  Result := FileExists(ExpandConstant('{commonappdata}\MT Cotiza Client\data\bootstrap.done'));
+  Result := FileExists(ExpandConstant('{commonappdata}\MT Cotiza Client\data\base-account-v2.done'));
 end;
 
 function IsValidUsername(Value: String): Boolean;
@@ -114,8 +114,9 @@ var
   ResultCode: Integer;
 begin
   AccountFile := ExpandConstant('{app}\installer-account.env');
+  ForceDirectories(ExpandConstant('{app}'));
   DeleteFile(AccountFile);
-  if HasExistingBootstrap() then
+  if HasConfiguredBaseAccount() then
     exit;
 
   AccountContent :=
@@ -251,7 +252,7 @@ end;
 
 function ShouldSkipPage(PageID: Integer): Boolean;
 begin
-  Result := (PageID = AccountPage.ID) and HasExistingBootstrap();
+  Result := (PageID = AccountPage.ID) and HasConfiguredBaseAccount();
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -295,8 +296,15 @@ end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-  if CurStep = ssPostInstall then begin
+  if CurStep = ssInstall then begin
     SaveThemePreference();
     SaveAccountBootstrap();
   end;
+end;
+
+procedure DeinitializeSetup();
+begin
+  { El bootstrap elimina este archivo al consumirlo. Esta limpieza cubre
+    cancelaciones o fallos de instalacion para no dejar la clave en disco. }
+  DeleteFile(ExpandConstant('{app}\installer-account.env'));
 end;
