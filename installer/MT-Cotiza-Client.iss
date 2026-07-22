@@ -1,5 +1,5 @@
 #define MyAppName "MT Cotiza Client"
-#define MyAppVersion "0.2.0"
+#define MyAppVersion "0.3.0"
 #define MyAppPublisher "MT Cotiza"
 #define MyAppExeName "electron.exe"
 #define MyAppId "{{7A45B986-1A83-49B1-9A8A-7C0A36A53A60}}"
@@ -19,6 +19,7 @@ OutputBaseFilename=MT-Cotiza-Client-Setup-{#MyAppVersion}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+LicenseFile=LICENSE-MT-COTIZA-CLIENT.txt
 SetupIconFile=..\electron\assets\run-app-icon.ico
 UninstallDisplayIcon={app}\electron\assets\run-app-icon.ico
 CloseApplications=yes

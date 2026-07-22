@@ -1,0 +1,54 @@
+CONTRATO DE LICENCIA DE USUARIO FINAL
+MT COTIZA CLIENT
+
+IMPORTANTE: Lee cuidadosamente este contrato antes de instalar o utilizar MT Cotiza Client.
+
+Al seleccionar "Acepto el acuerdo" y continuar con la instalación, declaras que has leído, comprendido y aceptado las condiciones de esta licencia. Si no estás de acuerdo, selecciona "No acepto el acuerdo" y cancela la instalación.
+
+1. OTORGAMIENTO DE LICENCIA
+
+MT Cotiza concede al cliente autorizado una licencia limitada, no exclusiva, revocable, personal y no transferible para instalar y utilizar MT Cotiza Client únicamente en el equipo y para la organización autorizados por el proveedor.
+
+La compra, entrega o instalación del software no transfiere la propiedad del programa ni de su código fuente.
+
+2. INSTALACIÓN Y USO AUTORIZADO
+
+Cada licencia corresponde a un cliente autorizado y a una instalación. Cualquier instalación adicional, traslado a otra organización o ampliación del número de equipos requiere autorización previa y escrita de MT Cotiza.
+
+El usuario es responsable de impedir que terceros no autorizados accedan al instalador, credenciales, respaldos o componentes del software.
+
+3. PROHIBICIÓN DE REVENTA Y DISTRIBUCIÓN
+
+Queda expresamente prohibido:
+
+- Revender, alquilar, sublicenciar, prestar, ceder o transferir el software o esta licencia.
+- Copiar, publicar, compartir o redistribuir el instalador a terceros.
+- Ofrecer MT Cotiza Client como producto o servicio propio sin autorización escrita.
+- Compartir credenciales, mecanismos de activación o información destinada a validar la licencia.
+- Eliminar o alterar avisos de propiedad, identidad, licencia o derechos de autor.
+
+4. MODIFICACIÓN E INGENIERÍA INVERSA
+
+No se permite modificar, descompilar, desensamblar, realizar ingeniería inversa, intentar obtener el código fuente ni crear obras derivadas del software, salvo cuando una norma aplicable lo permita expresamente.
+
+5. PROPIEDAD INTELECTUAL
+
+MT Cotiza Client, sus componentes, diseño, documentación, marcas, actualizaciones y código pertenecen a sus respectivos titulares. Esta licencia concede únicamente un derecho de uso y no concede derechos de propiedad intelectual.
+
+6. DATOS Y RESPALDOS
+
+El cliente es responsable de la exactitud de los datos ingresados y de conservar respaldos adecuados. Antes de actualizar, reparar, migrar o desinstalar el software, se recomienda generar y verificar un respaldo.
+
+7. ACTUALIZACIONES Y SOPORTE
+
+Las actualizaciones, mantenimiento y soporte se prestarán conforme a las condiciones comerciales acordadas con el cliente. MT Cotiza puede introducir mecanismos de identificación, activación o validación de licencia en versiones posteriores.
+
+8. TERMINACIÓN
+
+El incumplimiento de estas condiciones puede ocasionar la terminación de la licencia. En ese caso, el usuario deberá dejar de utilizar el software y eliminar las copias no autorizadas, sin perjuicio de otras acciones que correspondan.
+
+9. ACEPTACIÓN
+
+Al continuar con la instalación confirmas que cuentas con autorización para aceptar este contrato en nombre propio o de la organización cliente y que utilizarás MT Cotiza Client únicamente bajo estas condiciones.
+
+Si no aceptas esta licencia, no instales ni utilices el software.
