@@ -122,7 +122,22 @@ function getLogoDataUri() {
   return `data:image/png;base64,${logo}`;
 }
 
-function createWindow() {
+function isNavigationAborted(error) {
+  const message = String(error && (error.message || error));
+  return error?.errno === -3 || error?.code === 'ERR_ABORTED' || message.includes('(-3)');
+}
+
+async function loadApplicationUrl(url) {
+  try {
+    await mainWindow.loadURL(url);
+  } catch (error) {
+    if (!isNavigationAborted(error)) throw error;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    await mainWindow.loadURL(url);
+  }
+}
+
+async function createWindow() {
   const logoDataUri = getLogoDataUri();
   const logPathText = runLog.replace(/\\/g, '\\\\');
 
@@ -147,7 +162,7 @@ function createWindow() {
     return { action: 'deny' };
   });
 
-  mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`
+  await mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`
     <html>
       <head><title>MT Cotiza Client</title></head>
       <body style="font-family:Segoe UI,Arial,sans-serif;background:#ffffff;margin:0;display:grid;place-items:center;height:100vh;color:#1f2933">
@@ -180,7 +195,7 @@ app.whenReady().then(async () => {
   if (!hasSingleInstanceLock) return;
   await session.defaultSession.clearStorageData().catch(() => {});
   await session.defaultSession.clearCache().catch(() => {});
-  createWindow();
+  await createWindow();
   const statusTimer = setInterval(() => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('launcher-status', getLastRunLogLine());
@@ -197,7 +212,7 @@ app.whenReady().then(async () => {
     if (!readyNow) startServices();
     const readyUrl = readyNow || await waitForAnyUrl(loginUrls, 0);
     clearInterval(statusTimer);
-    await mainWindow.loadURL(readyUrl);
+    await loadApplicationUrl(readyUrl);
   } catch (err) {
     clearInterval(statusTimer);
     await mainWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(`
