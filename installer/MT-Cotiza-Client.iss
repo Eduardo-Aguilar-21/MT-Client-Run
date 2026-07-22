@@ -270,28 +270,24 @@ begin
 
   if Length(FullName) < 3 then begin
     MsgBox('Ingresa el nombre completo del administrador.', mbError, MB_OK);
-    AccountPage.Edits[0].SetFocus;
     Result := False;
     exit;
   end;
 
   if not IsValidUsername(Username) then begin
     MsgBox('El usuario debe tener entre 3 y 40 caracteres y usar solo letras, números, punto, guion o guion bajo.', mbError, MB_OK);
-    AccountPage.Edits[1].SetFocus;
     Result := False;
     exit;
   end;
 
   if (Length(Password) < 8) or (Length(Password) > 64) then begin
     MsgBox('La contraseña debe tener entre 8 y 64 caracteres.', mbError, MB_OK);
-    AccountPage.Edits[2].SetFocus;
     Result := False;
     exit;
   end;
 
   if Password <> AccountPage.Values[3] then begin
     MsgBox('Las contraseñas no coinciden.', mbError, MB_OK);
-    AccountPage.Edits[3].SetFocus;
     Result := False;
     exit;
   end;
