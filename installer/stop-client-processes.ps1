@@ -25,20 +25,36 @@ function Write-InstallerLog([string]$Message) {
 function Stop-InstallerTarget([int]$ProcessId, [string]$Description) {
   if ($ProcessId -eq $PID) { return }
   try {
-    Stop-Process -Id $ProcessId -Force -ErrorAction Stop
-    Write-InstallerLog "Proceso detenido: $Description (PID $ProcessId)."
-  } catch {
-    try {
-      $taskKill = Join-Path $env:SystemRoot "System32\taskkill.exe"
-      & $taskKill /PID $ProcessId /T /F 1>$null 2>$null
-      if ($LASTEXITCODE -eq 0) {
-        Write-InstallerLog "Proceso detenido con taskkill: $Description (PID $ProcessId)."
-      } else {
-        Write-InstallerLog "Aviso: no se pudo detener $Description (PID $ProcessId), codigo taskkill $LASTEXITCODE."
-      }
-    } catch {
-      Write-InstallerLog "Aviso: no se pudo detener $Description (PID $ProcessId): $($_.Exception.Message)"
+    $taskKill = Join-Path $env:SystemRoot "System32\taskkill.exe"
+    & $taskKill /PID $ProcessId /T /F 1>$null 2>$null
+    if ($LASTEXITCODE -eq 0) {
+      Write-InstallerLog "Proceso detenido con taskkill: $Description (PID $ProcessId)."
+      return
     }
+  } catch {
+    Write-InstallerLog "Aviso de taskkill para $Description (PID $ProcessId): $($_.Exception.Message)"
+  }
+  try {
+    Stop-Process -Id $ProcessId -Force -ErrorAction Stop
+    Write-InstallerLog "Proceso detenido con Stop-Process: $Description (PID $ProcessId)."
+  } catch {
+    Write-InstallerLog "Aviso: no se pudo detener $Description (PID $ProcessId): $($_.Exception.Message)"
+  }
+}
+
+function Get-InstalledClientProcesses() {
+  try {
+    return @(Get-CimInstance Win32_Process -ErrorAction Stop | Where-Object {
+      $name = ([string]$_.Name).ToLowerInvariant()
+      if (@("electron.exe", "java.exe", "node.exe") -notcontains $name) { return $false }
+      $executablePath = [string]$_.ExecutablePath
+      $commandLine = [string]$_.CommandLine
+      ($executablePath.StartsWith($rootPrefix, [StringComparison]::OrdinalIgnoreCase)) -or
+        ($commandLine.IndexOf($InstallRoot, [StringComparison]::OrdinalIgnoreCase) -ge 0)
+    })
+  } catch {
+    Write-InstallerLog "Aviso al consultar procesos instalados con CIM: $($_.Exception.Message)"
+    return @()
   }
 }
 
@@ -80,6 +96,25 @@ try {
   }
 } catch {
   Write-InstallerLog "Aviso al consultar procesos Electron/Java/Node: $($_.Exception.Message)"
+}
+
+for ($attempt = 1; $attempt -le 30; $attempt++) {
+  $remainingProcesses = @(Get-InstalledClientProcesses)
+  if ($remainingProcesses.Count -eq 0) { break }
+  foreach ($remainingProcess in $remainingProcesses) {
+    Stop-InstallerTarget -ProcessId ([int]$remainingProcess.ProcessId) -Description ([string]$remainingProcess.Name)
+  }
+  Start-Sleep -Milliseconds 300
+}
+
+$remainingProcesses = @(Get-InstalledClientProcesses)
+if ($remainingProcesses.Count -gt 0) {
+  $remainingSummary = ($remainingProcesses | ForEach-Object { "$($_.Name) PID $($_.ProcessId)" }) -join ", "
+  Write-InstallerLog "Aviso: continuan procesos del cliente: $remainingSummary"
+  if ($ResetData) {
+    Write-InstallerLog "ERROR: instalar desde cero requiere cerrar todos los procesos del cliente."
+    exit 1
+  }
 }
 
 if (-not $ResetData) {
