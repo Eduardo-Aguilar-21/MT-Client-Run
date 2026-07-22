@@ -1,5 +1,5 @@
 #define MyAppName "MT Cotiza Client"
-#define MyAppVersion "0.7.2"
+#define MyAppVersion "0.7.3"
 #define MyAppPublisher "MT Cotiza"
 #define MyAppExeName "electron.exe"
 #define MyAppId "{{7A45B986-1A83-49B1-9A8A-7C0A36A53A60}}"
@@ -211,7 +211,7 @@ begin
     ewWaitUntilTerminated,
     ResultCode
   ) or (ResultCode <> 0) then begin
-    Result := 'No se pudieron detener los procesos anteriores de MT Cotiza. Cierra la aplicacion y vuelve a intentar.';
+    Result := 'No se pudo preparar la instalación. Revisa C:\ProgramData\MT Cotiza Client\installer-stop-processes.log y vuelve a intentar.';
     exit;
   end;
 
